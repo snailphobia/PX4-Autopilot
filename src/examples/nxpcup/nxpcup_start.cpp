@@ -52,7 +52,10 @@ bool threadIsRunning = false;
 void roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp)
 {
 	// Converting steering value from percent to euler angle
-	control.steer *= 60.0f; //max turn angle 60 degree
+	//control.steer *= 60.0f; //max turn angle 60 degree
+	//control.steer *= (float)3.14159/180; // change to radians
+
+	//printf("roverSteerSpeed: control.steer: %0.2f\n", (double)control.steer);
 
 	// Converting the euler angle into a quaternion for vehicle_attitude_setpoint
 	Eulerf euler{0.0, 0.0, control.steer};
@@ -62,10 +65,7 @@ void roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp)
 	_att_sp.thrust_body[0] = control.speed;
 
 	// Steering control of the Rover
-	_att_sp.q_d[0] = qe(0);
-	_att_sp.q_d[1] = qe(1);
-	_att_sp.q_d[2] = qe(2);
-	_att_sp.q_d[3] = qe(3);
+	qe.copyTo(_att_sp.q_d);
 
 }
 
@@ -80,6 +80,7 @@ int race_thread_main(int argc, char **argv)
 	uORB::Publication<vehicle_control_mode_s>		_control_mode_pub{ORB_ID(vehicle_control_mode)};
 	struct vehicle_control_mode_s				_control_mode;
 
+	/* Set all control mode values to 0 so that RTPS doesn't complain*/
 	_control_mode.flag_armed = 0;
     _control_mode.flag_external_manual_override_ok = 0;
     _control_mode.flag_control_manual_enabled = 0;

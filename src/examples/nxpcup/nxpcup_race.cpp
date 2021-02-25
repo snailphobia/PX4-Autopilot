@@ -75,10 +75,11 @@ roverControl raceTrack(pixy_vector_s &pixy)
 	Vector vec2 = copy_vectors(pixy, 2);
 	_vector vec_first;				// vector from two point of vec1
 	_vector vec_second;				// vector from two point of vec2
+	_vector vec_steer;
 	float angle;					// angle between vec_first and vec_second
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
-	int16_t window_center = (frameWidth / 2);
+	//int16_t window_center = (frameWidth / 2);
 	roverControl control{};
 	float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
@@ -95,7 +96,7 @@ roverControl raceTrack(pixy_vector_s &pixy)
 		}else{
 			time_diff = hrt_elapsed_time_atomic(&no_line_time);
 			control.steer = 0.0f;
-			if(time_diff > 1000000){
+			if(time_diff > 10000){
 				/* Stopping if no vector is available */
 				control.steer = 0.0f;
 				control.speed = SPEED_STOP;
@@ -131,11 +132,19 @@ roverControl raceTrack(pixy_vector_s &pixy)
 
 		if (angle < 0.9f) {
 			//Calc the middle of both vector coordinates m_x1
-			main_vec.m_x1 = (vec1.m_x1 + vec1.m_x1) / 2;
+			main_vec.m_x0 = (vec1.m_x0 + vec2.m_x0) / 2;
+			main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
+			main_vec.m_x0 = (vec1.m_y0 + vec2.m_y0) / 2;
+			main_vec.m_y1 = (vec1.m_y1 + vec2.m_y1) / 2;
+
+			vec_steer.x = main_vec.m_x0 - main_vec.m_x1;
+			vec_steer.y = main_vec.m_y0 - main_vec.m_y1;
+			control.steer = atan(vec_steer.y / vec_steer.x);
+
+			printf("Case 2: control.steer: %0.2f\n", (double)control.steer);
 
 			// Calculate heading error with respect to m_x1, which is the far-end of the vector
-			control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
-			control.steer = control.steer / 2;
+			//control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
 
 			control.speed = SPEED_FAST;
 			break;
@@ -157,13 +166,18 @@ roverControl raceTrack(pixy_vector_s &pixy)
 		if(vec1.m_x0 != vec1.m_x1){
 			control.steer = (-1) * x / y; // Gradient of the main vector
 			control.speed = SPEED_NORMAL;
-			control.steer = control.steer / 2;
 		}else{
 			control.steer = 0.0;
 			control.speed = SPEED_SLOW;
 		}
 		break;
 	}
+
+	//printf("No line time: %d\n", (int)no_line_time);
+	//printf("Number of Vectors: %d\n", num_vectors);
+	//printf("Steering angle: %0.2f\n", (double)control.steer);
+	//printf("Speed: %0.2f\n", (double)control.speed);
+	//control.speed = 0;
 
 	return control;
 }
