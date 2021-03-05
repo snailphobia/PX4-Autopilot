@@ -70,20 +70,12 @@ Vector copy_vectors(pixy_vector_s &pixy, uint8_t num) {
 
 roverControl raceTrack(pixy_vector_s &pixy)
 {
-	//Vector main_vec = copy_vectors(pixy, 1);
-	float main_x0;
-	float main_x1;
-	float main_y0;
-	float main_y1;
+	Vector main_vec;
 	Vector vec1 = copy_vectors(pixy, 1);
 	Vector vec2 = copy_vectors(pixy, 2);
-	//_vector vec_first;				// vector from two point of vec1
-	//_vector vec_second;				// vector from two point of vec2
-	_vector vec_steer;
-	//float angle;					// angle between vec_first and vec_second
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
-	//int16_t window_center = (frameWidth / 2);
+	int16_t window_center = (frameWidth / 2);
 	roverControl control{};
 	float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
@@ -110,47 +102,9 @@ roverControl raceTrack(pixy_vector_s &pixy)
 
 	case 2:
 		first_call = true;
-		// Calc of vectors from two points
-		// if (vec1.m_x1 > vec1.m_x0) {
-		// 	vec_first.x = (float)(vec1.m_x1 - vec1.m_x0) / (float)frameWidth;
-		// 	vec_first.y = (float)(vec1.m_y1 - vec1.m_y0) / (float)frameHeight;
 
-		// } else {
-		// 	vec_first.x = (float)(vec1.m_x0 - vec1.m_x1) / (float)frameWidth;
-		// 	vec_first.y = (float)(vec1.m_y0 - vec1.m_y1) / (float)frameHeight;
-		// }
-
-		// if (vec2.m_x1 > vec2.m_x0) {
-		// 	vec_second.x = (float)(vec2.m_x1 - vec2.m_x0) / (float)frameWidth;
-		// 	vec_second.y = (float)(vec2.m_y1 - vec2.m_y0) / (float)frameHeight;
-
-		// } else {
-		// 	vec_second.x = (float)(vec2.m_x0 - vec2.m_x1) / (float)frameWidth;
-		// 	vec_second.y = (float)(vec2.m_y0 - vec2.m_y1) / (float)frameHeight;
-		// }
-
-		// Calc the angle between the two vectors
-		//vec_first.norm = sqrt(vec_first.x * vec_first.x + vec_first.y * vec_first.y);
-		//vec_second.norm = sqrt(vec_second.x * vec_second.x + vec_second.y * vec_second.y);
-		//angle = (vec_first.x * vec_second.x + vec_first.y * vec_second.y) / (vec_first.norm * vec_second.norm);
-
-		//Calc the middle of both vector coordinates m_x1
-		main_x0 = ((vec1.m_x0-36) + (vec2.m_x0-36)) / 2;
-		main_x1 = ((vec1.m_x1-36) + (vec2.m_x1-36)) / 2;
-		main_y0 = (((vec1.m_y0-52)*-1) + ((vec2.m_y0-52)*-1)) / 2;
-		main_y1 = (((vec1.m_y1-52)*-1) + ((vec2.m_y1-52)*-1)) / 2;
-
-		printf("Main vec: x0=%.02f y0=%.02f x1=%.02f y1=%.02f\n", (double)main_x0, (double)main_y0, (double)main_x1, (double)main_y1);
-
-		vec_steer.x = main_x1 - main_x0;
-		vec_steer.y = main_y1 - main_y0;
-		control.steer = atan(vec_steer.x / vec_steer.y) + (float)1.57;
-
-		printf("Case 2: vec_steer.x=%.02f vec_steer.y=%.02f\n", (double)vec_steer.x, (double)vec_steer.y);
-		printf("Case 2: control.steer: %0.2f\n", (double)control.steer);
-
-		// Calculate heading error with respect to m_x1, which is the far-end of the vector
-		//control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
+		main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
+		control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
 
 		control.speed = SPEED_FAST;
 		break;

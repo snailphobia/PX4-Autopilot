@@ -49,23 +49,28 @@ static int daemon_task;             /* Handle of deamon task / thread */
 bool threadShouldExit = false;
 bool threadIsRunning = false;
 
-void roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp)
+void roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp, vehicle_attitude_s &att)
 {
 	// Converting steering value from percent to euler angle
-	//control.steer *= 60.0f; //max turn angle 60 degree
-	//control.steer *= (float)3.14159/180; // change to radians
+	control.steer *= -60.0f; //max turn angle 60 degree
+	control.steer *= (float)3.14159/180; // change to radians
 
-	//printf("roverSteerSpeed: control.steer: %0.2f\n", (double)control.steer);
+	// Get current attitude quaternion
+	Quatf current_qe{att.q[0], att.q[1], att.q[2], att.q[3]};
 
 	// Converting the euler angle into a quaternion for vehicle_attitude_setpoint
 	Eulerf euler{0.0, 0.0, control.steer};
 	Quatf qe{euler};
 
+	// Create new quaternion from the difference of current vs steering
+	Quatf new_qe;
+	new_qe = current_qe * qe.inversed();
+
 	// Throttle control of the rover
 	_att_sp.thrust_body[0] = control.speed;
 
 	// Steering control of the Rover
-	qe.copyTo(_att_sp.q_d);
+	new_qe.copyTo(_att_sp.q_d);
 
 }
 
@@ -106,6 +111,13 @@ int race_thread_main(int argc, char **argv)
 	struct pixy_vector_s pixy;
 	uORB::Subscription pixy_sub{ORB_ID(pixy_vector)};
 	pixy_sub.copy(&pixy);
+
+	struct vehicle_attitude_s att;
+	uORB::Subscription att_sub{ORB_ID(vehicle_attitude)};
+	att_sub.copy(&att);
+	// uORB::Publication<vehicle_attitude_s> _att_pub{ORB_ID(vehicle_attitude)};
+	// struct vehicle_attitude_s _att;
+	// _att.timestamp = hrt_absolute_time();
 
 	/* Publication of uORB messages */
 	// struct safety_s safety;
@@ -152,7 +164,8 @@ int race_thread_main(int argc, char **argv)
 			}
 			break;
 		}
-		roverSteerSpeed(motorControl, _att_sp);		// setting values for speed and steering to attitude setpoints
+		att_sub.copy(&att);
+		roverSteerSpeed(motorControl, _att_sp, att);		// setting values for speed and steering to attitude setpoints
 
 		// Publishing all
 		_control_mode.timestamp = hrt_absolute_time();
@@ -163,7 +176,7 @@ int race_thread_main(int argc, char **argv)
 		if (threadShouldExit) {
 			threadIsRunning = false;
 			// reset speed and steering
-			roverSteerSpeed(motorControl, _att_sp);
+			roverSteerSpeed(motorControl, _att_sp, att);
 			// puplishing attitude setpoints
 			_att_sp.timestamp = hrt_absolute_time();
 			_att_sp_pub.publish(_att_sp);
