@@ -103,6 +103,8 @@ roverControl raceTrack(pixy_vector_s &pixy)
 	case 2:
 		first_call = true;
 
+		/* Very simple steering angle calculation, get average of the x of top two points and 
+		   find distance from center of frame */
 		main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
 		control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
 
@@ -128,12 +130,6 @@ roverControl raceTrack(pixy_vector_s &pixy)
 		}
 		break;
 	}
-
-	//printf("No line time: %d\n", (int)no_line_time);
-	//printf("Number of Vectors: %d\n", num_vectors);
-	//printf("Steering angle: %0.2f\n", (double)control.steer);
-	//printf("Speed: %0.2f\n", (double)control.speed);
-	//control.speed = 0;
 
 	return control;
 }

@@ -112,14 +112,12 @@ int race_thread_main(int argc, char **argv)
 	uORB::Subscription pixy_sub{ORB_ID(pixy_vector)};
 	pixy_sub.copy(&pixy);
 
+	/* Subscribe to vehicle attitude */
 	struct vehicle_attitude_s att;
 	uORB::Subscription att_sub{ORB_ID(vehicle_attitude)};
 	att_sub.copy(&att);
-	// uORB::Publication<vehicle_attitude_s> _att_pub{ORB_ID(vehicle_attitude)};
-	// struct vehicle_attitude_s _att;
-	// _att.timestamp = hrt_absolute_time();
 
-	/* Publication of uORB messages */
+	/* Publication of uORB messages (commented out for simulation, you may want this on real cup car) */
 	// struct safety_s safety;
 	// uORB::Subscription safety_sub{ORB_ID(safety)};		// Safety switch request for starting and stopping the racing
 	// safety_sub.copy(&safety);
@@ -164,8 +162,10 @@ int race_thread_main(int argc, char **argv)
 			}
 			break;
 		}
+
+		/* get attitude, and update attitude setpoint */
 		att_sub.copy(&att);
-		roverSteerSpeed(motorControl, _att_sp, att);		// setting values for speed and steering to attitude setpoints
+		roverSteerSpeed(motorControl, _att_sp, att);
 
 		// Publishing all
 		_control_mode.timestamp = hrt_absolute_time();
