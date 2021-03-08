@@ -84,6 +84,7 @@ int race_thread_main(int argc, char **argv)
 	/* Publication of uORB messages */
 	uORB::Publication<vehicle_control_mode_s>		_control_mode_pub{ORB_ID(vehicle_control_mode)};
 	struct vehicle_control_mode_s				_control_mode;
+	memset(&_control_mode, 0, sizeof(_control_mode));
 
 	/* Set all control mode values to 0 so that RTPS doesn't complain*/
 	_control_mode.flag_armed = 0;
@@ -106,15 +107,18 @@ int race_thread_main(int argc, char **argv)
 
 	uORB::Publication<vehicle_attitude_setpoint_s>		_att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 	struct vehicle_attitude_setpoint_s			_att_sp;
+	memset(&_att_sp, 0, sizeof(_att_sp));
 
 	/* Subscribe to pixy vector msg */
 	struct pixy_vector_s pixy;
 	uORB::Subscription pixy_sub{ORB_ID(pixy_vector)};
 	pixy_sub.copy(&pixy);
+	memset(&pixy, 0, sizeof(pixy));
 
 	/* Subscribe to vehicle attitude */
-	struct vehicle_attitude_s att;
 	uORB::Subscription att_sub{ORB_ID(vehicle_attitude)};
+	struct vehicle_attitude_s att;
+	memset(&att, 0, sizeof(att));
 	att_sub.copy(&att);
 
 	/* Publication of uORB messages (commented out for simulation, you may want this on real cup car) */
@@ -218,8 +222,8 @@ int nxpcup_main(int argc, char *argv[])
 		threadShouldExit = false;
 		daemon_task = px4_task_spawn_cmd("nxpcup",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_MAX - 5,
-						 2000,
+						 SCHED_PRIORITY_MAX - 20,
+						 2048,
 						 race_thread_main,
 						 (argv) ? (char *const *)&argv[2] : (char *const *)nullptr);
 
