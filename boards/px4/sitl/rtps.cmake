@@ -88,7 +88,7 @@ px4_add_board(
 		fake_magnetometer
 		fixedwing_control # Tutorial code from https://px4.io/dev/example_fixedwing_control
 		hello
-		nxpcup
+		nxpcup_work
 		#hwtest # Hardware test
 		#matlab_csv_serial
 		px4_mavlink_debug # Tutorial code from http://dev.px4.io/en/debug/debug_values.html

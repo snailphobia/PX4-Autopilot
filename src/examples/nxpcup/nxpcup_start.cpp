@@ -88,22 +88,22 @@ int race_thread_main(int argc, char **argv)
 
 	/* Set all control mode values to 0 so that RTPS doesn't complain*/
 	_control_mode.flag_armed = 0;
-    _control_mode.flag_external_manual_override_ok = 0;
-    _control_mode.flag_control_manual_enabled = 0;
-    _control_mode.flag_control_auto_enabled = 0;
-    _control_mode.flag_control_offboard_enabled = 0;
-    _control_mode.flag_control_rates_enabled = 0;
-    _control_mode.flag_control_attitude_enabled = 0;
-    _control_mode.flag_control_yawrate_override_enabled = 0;
-    _control_mode.flag_control_rattitude_enabled = 0;
-    _control_mode.flag_control_force_enabled = 0;
-    _control_mode.flag_control_acceleration_enabled = 0;
-    _control_mode.flag_control_velocity_enabled = 0;
-    _control_mode.flag_control_position_enabled = 0;
-    _control_mode.flag_control_altitude_enabled = 0;
-    _control_mode.flag_control_climb_rate_enabled = 0;
-    _control_mode.flag_control_termination_enabled = 0;
-    _control_mode.flag_control_fixed_hdg_enabled = 0;
+	_control_mode.flag_external_manual_override_ok = 0;
+	_control_mode.flag_control_manual_enabled = 0;
+	_control_mode.flag_control_auto_enabled = 0;
+	_control_mode.flag_control_offboard_enabled = 0;
+	_control_mode.flag_control_rates_enabled = 0;
+	_control_mode.flag_control_attitude_enabled = 0;
+	_control_mode.flag_control_yawrate_override_enabled = 0;
+	_control_mode.flag_control_rattitude_enabled = 0;
+	_control_mode.flag_control_force_enabled = 0;
+	_control_mode.flag_control_acceleration_enabled = 0;
+	_control_mode.flag_control_velocity_enabled = 0;
+	_control_mode.flag_control_position_enabled = 0;
+	_control_mode.flag_control_altitude_enabled = 0;
+	_control_mode.flag_control_climb_rate_enabled = 0;
+	_control_mode.flag_control_termination_enabled = 0;
+	_control_mode.flag_control_fixed_hdg_enabled = 0;
 
 	uORB::Publication<vehicle_attitude_setpoint_s>		_att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 	struct vehicle_attitude_setpoint_s			_att_sp;
