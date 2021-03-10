@@ -43,9 +43,9 @@
 #include <px4_defines.h>
 #include <uORB/topics/pixy_vector.h>
 
-#define SPEED_FAST	0.15f
-#define SPEED_NORMAL	0.1f
-#define SPEED_SLOW	0.05f
+#define SPEED_FAST	0.3f
+#define SPEED_NORMAL	0.2f
+#define SPEED_SLOW	0.1f
 #define SPEED_STOP	0.0f
 
 struct roverControl {
@@ -76,7 +76,7 @@ struct Vector
 	uint8_t m_y1;
 };
 
-roverControl raceTrack(const pixy_vector_s &pixy);
+roverControl raceTrack(pixy_vector_s &pixy);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
 Vector copy_vectors(pixy_vector_s &pixy, uint8_t num);
 

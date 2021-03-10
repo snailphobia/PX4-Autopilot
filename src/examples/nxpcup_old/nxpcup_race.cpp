@@ -51,7 +51,7 @@ uint8_t get_num_vectors(Vector &vec1, Vector &vec2) {
 	return numVectors;
 }
 
-Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
+Vector copy_vectors(pixy_vector_s &pixy, uint8_t num) {
 	Vector vec;
 	if(num == 1) {
 		vec.m_x0 = pixy.m0_x0;
@@ -68,7 +68,7 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	return vec;
 }
 
-roverControl raceTrack(const pixy_vector_s &pixy)
+roverControl raceTrack(pixy_vector_s &pixy)
 {
 	Vector main_vec;
 	Vector vec1 = copy_vectors(pixy, 1);

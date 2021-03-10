@@ -116,7 +116,7 @@ px4_add_board(
 		hello
 		hwtest # Hardware test
 		#matlab_csv_serial
-		nxpcup_work
+		nxpcup
 		px4_mavlink_debug # Tutorial code from http://dev.px4.io/en/debug/debug_values.html
 		px4_simple_app # Tutorial code from http://dev.px4.io/en/apps/hello_sky.html
 		rover_steering_control # Rover example app
