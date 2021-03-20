@@ -68,6 +68,7 @@ px4_add_romfs_files(
 	1061_r1_rover
 	1062_tf-r1
 	1064_nxp_cupcar
+	1064_nxp_cupcar.post
 	1070_boat
 	3010_quadrotor_x
 	3011_hexarotor_x

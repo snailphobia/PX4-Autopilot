@@ -1,0 +1,7 @@
+#!/bin/sh
+# shellcheck disable=SC2154
+
+#micrortps_client start -t UDP -r $((2019+2*px4_instance)) -s $((2020+2*px4_instance))
+
+# Use static assignment till dynamic assignment above actually works for non-zero instance
+micrortps_client start -t UDP -r 2019 -s 2020
