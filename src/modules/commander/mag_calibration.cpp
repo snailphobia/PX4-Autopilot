@@ -70,8 +70,11 @@ using namespace matrix;
 using namespace time_literals;
 
 static constexpr char sensor_name[] {"mag"};
-static constexpr int MAX_MAGS = 4;
+
+static constexpr int MAX_MAGS = 3;
+
 static constexpr float MAG_SPHERE_RADIUS_DEFAULT = 0.2f;
+
 static constexpr unsigned int calibration_total_points = 240;	///< The total points per magnetometer
 static constexpr unsigned int calibraton_duration_s = 42; 	///< The total duration the routine is allowed to take
 
@@ -322,7 +325,6 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 		{ORB_ID(sensor_mag), 0, 0},
 		{ORB_ID(sensor_mag), 0, 1},
 		{ORB_ID(sensor_mag), 0, 2},
-		{ORB_ID(sensor_mag), 0, 3},
 	};
 
 	uint64_t calibration_deadline = hrt_absolute_time() + worker_data->calibration_interval_perside_us;

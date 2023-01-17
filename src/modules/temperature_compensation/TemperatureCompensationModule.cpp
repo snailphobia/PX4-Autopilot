@@ -49,8 +49,8 @@ TemperatureCompensationModule::TemperatureCompensationModule() :
 {
 	for (int i = 0; i < SENSOR_COUNT_MAX; i++) {
 		_corrections.accel_temperature[i] = NAN;
-		_corrections.gyro_temperature[i] = NAN;
-		_corrections.baro_temperature[i] = NAN;
+		_corrections.gyro_temperature[i]  = NAN;
+		_corrections.baro_temperature[i]  = NAN;
 	}
 
 	_sensor_correction_pub.advertise();
@@ -140,7 +140,7 @@ void TemperatureCompensationModule::parameters_update()
 
 void TemperatureCompensationModule::accelPoll()
 {
-	float *offsets[] = {_corrections.accel_offset_0, _corrections.accel_offset_1, _corrections.accel_offset_2, _corrections.accel_offset_3 };
+	float *offsets[] = {_corrections.accel_offset_0, _corrections.accel_offset_1, _corrections.accel_offset_2 };
 
 	// For each accel instance
 	for (uint8_t uorb_index = 0; uorb_index < ACCEL_COUNT_MAX; uorb_index++) {
@@ -163,7 +163,7 @@ void TemperatureCompensationModule::accelPoll()
 
 void TemperatureCompensationModule::gyroPoll()
 {
-	float *offsets[] = {_corrections.gyro_offset_0, _corrections.gyro_offset_1, _corrections.gyro_offset_2, _corrections.gyro_offset_3 };
+	float *offsets[] = {_corrections.gyro_offset_0, _corrections.gyro_offset_1, _corrections.gyro_offset_2 };
 
 	// For each gyro instance
 	for (uint8_t uorb_index = 0; uorb_index < GYRO_COUNT_MAX; uorb_index++) {
@@ -180,7 +180,7 @@ void TemperatureCompensationModule::gyroPoll()
 					_corrections_changed = true;
 				}
 
-			} else if (PX4_ISNAN(sensor_gyro.temperature)) {
+			} else {
 
 				_corrections.gyro_device_ids[uorb_index] = sensor_gyro.device_id;
 
@@ -198,7 +198,7 @@ void TemperatureCompensationModule::gyroPoll()
 
 void TemperatureCompensationModule::magPoll()
 {
-	float *offsets[] = {_corrections.mag_offset_0, _corrections.mag_offset_1, _corrections.mag_offset_2, _corrections.mag_offset_3 };
+	float *offsets[] = {_corrections.mag_offset_0, _corrections.mag_offset_1, _corrections.mag_offset_2 };
 
 	// For each mag instance
 	for (uint8_t uorb_index = 0; uorb_index < MAG_COUNT_MAX; uorb_index++) {
@@ -215,14 +215,14 @@ void TemperatureCompensationModule::magPoll()
 					_corrections_changed = true;
 				}
 
-			} else if (PX4_ISNAN(sensor_mag.temperature)) {
+			} else {
 
 				_corrections.mag_device_ids[uorb_index] = sensor_mag.device_id;
 
 				// Use primary baro instance if mag temperature was NAN.
 				sensor_baro_s sensor_baro;
 
-				if (_accel_subs[0].update(&sensor_baro)) {
+				if (_baro_subs[0].update(&sensor_baro)) {
 					_corrections.mag_temperature[uorb_index] = sensor_baro.temperature;
 					_corrections_changed = true;
 				}
@@ -233,7 +233,7 @@ void TemperatureCompensationModule::magPoll()
 
 void TemperatureCompensationModule::baroPoll()
 {
-	float *offsets[] = {&_corrections.baro_offset_0, &_corrections.baro_offset_1, &_corrections.baro_offset_2, &_corrections.baro_offset_3 };
+	float *offsets[] = {&_corrections.baro_offset_0, &_corrections.baro_offset_1, &_corrections.baro_offset_2 };
 
 	// For each baro instance
 	for (uint8_t uorb_index = 0; uorb_index < BARO_COUNT_MAX; uorb_index++) {
@@ -250,7 +250,7 @@ void TemperatureCompensationModule::baroPoll()
 					_corrections_changed = true;
 				}
 
-			} else if (PX4_ISNAN(sensor_baro.temperature)) {
+			} else {
 
 				_corrections.baro_device_ids[uorb_index] = sensor_baro.device_id;
 

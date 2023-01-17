@@ -111,28 +111,24 @@ private:
 		{ORB_ID(sensor_accel), 0},
 		{ORB_ID(sensor_accel), 1},
 		{ORB_ID(sensor_accel), 2},
-		{ORB_ID(sensor_accel), 3},
 	};
 
 	uORB::Subscription _gyro_subs[GYRO_COUNT_MAX] {
 		{ORB_ID(sensor_gyro), 0},
 		{ORB_ID(sensor_gyro), 1},
 		{ORB_ID(sensor_gyro), 2},
-		{ORB_ID(sensor_gyro), 3},
 	};
 
 	uORB::Subscription _mag_subs[MAG_COUNT_MAX] {
 		{ORB_ID(sensor_mag), 0},
 		{ORB_ID(sensor_mag), 1},
 		{ORB_ID(sensor_mag), 2},
-		{ORB_ID(sensor_mag), 3},
 	};
 
 	uORB::Subscription _baro_subs[BARO_COUNT_MAX] {
 		{ORB_ID(sensor_baro), 0},
 		{ORB_ID(sensor_baro), 1},
 		{ORB_ID(sensor_baro), 2},
-		{ORB_ID(sensor_baro), 3},
 	};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};

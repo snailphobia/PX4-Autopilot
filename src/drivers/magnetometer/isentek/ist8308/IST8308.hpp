@@ -46,7 +46,6 @@
 #include <lib/drivers/device/i2c.h>
 #include <lib/drivers/magnetometer/PX4Magnetometer.hpp>
 #include <lib/perf/perf_counter.h>
-#include <lib/sensor_calibration/Barometer.hpp>
 #include <px4_platform_common/i2c_spi_buses.h>
 
 using namespace iSentek_IST8308;

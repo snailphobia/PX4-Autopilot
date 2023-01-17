@@ -63,7 +63,7 @@ using namespace time_literals;
 
 static constexpr char sensor_name[] {"baro"};
 
-static constexpr int MAX_SENSOR_COUNT = 4;
+static constexpr int MAX_SENSOR_COUNT = 3;
 
 static float PressureToAltitude(float pressure_pa, float temperature)
 {

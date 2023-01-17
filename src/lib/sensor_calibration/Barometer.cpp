@@ -97,10 +97,6 @@ void Barometer::SensorCorrectionsUpdate(bool force)
 					case 2:
 						_thermal_offset = corrections.baro_offset_2;
 						return;
-
-					case 3:
-						_thermal_offset = corrections.baro_offset_3;
-						return;
 					}
 				}
 			}

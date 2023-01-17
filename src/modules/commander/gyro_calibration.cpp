@@ -60,7 +60,8 @@
 #include <uORB/topics/sensor_gyro.h>
 
 static constexpr char sensor_name[] {"gyro"};
-static constexpr unsigned MAX_GYROS = 4;
+
+static constexpr unsigned MAX_GYROS = 3;
 
 using matrix::Vector3f;
 
@@ -86,7 +87,6 @@ static calibrate_return gyro_calibration_worker(gyro_worker_data_t &worker_data)
 		{ORB_ID(sensor_gyro), 0, 0},
 		{ORB_ID(sensor_gyro), 0, 1},
 		{ORB_ID(sensor_gyro), 0, 2},
-		{ORB_ID(sensor_gyro), 0, 3},
 	};
 
 	/* use slowest gyro to pace, but count correctly per-gyro for statistics */

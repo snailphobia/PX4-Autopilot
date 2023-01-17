@@ -95,9 +95,6 @@ void Gyroscope::SensorCorrectionsUpdate(bool force)
 					case 2:
 						_thermal_offset = Vector3f{corrections.gyro_offset_2};
 						return;
-					case 3:
-						_thermal_offset = Vector3f{corrections.gyro_offset_3};
-						return;
 					}
 				}
 			}
