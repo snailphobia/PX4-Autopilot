@@ -47,9 +47,19 @@ TemperatureCompensationModule::TemperatureCompensationModule() :
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default),
 	_loop_perf(perf_alloc(PC_ELAPSED, "temperature_compensation"))
 {
-	for (int i = 0; i < SENSOR_COUNT_MAX; i++) {
+	for (int i = 0; i < MAX_ACCEL_COUNT; i++) {
 		_corrections.accel_temperature[i] = NAN;
+	}
+
+	for (int i = 0; i < MAX_GYRO_COUNT; i++) {
 		_corrections.gyro_temperature[i]  = NAN;
+	}
+
+	for (int i = 0; i < MAX_MAG_COUNT; i++) {
+		_corrections.mag_temperature[i]   = NAN;
+	}
+
+	for (int i = 0; i < MAX_BARO_COUNT; i++) {
 		_corrections.baro_temperature[i]  = NAN;
 	}
 
@@ -66,7 +76,7 @@ void TemperatureCompensationModule::parameters_update()
 	_temperature_compensation.parameters_update();
 
 	// Accel
-	for (uint8_t uorb_index = 0; uorb_index < ACCEL_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_ACCEL_COUNT; uorb_index++) {
 		sensor_accel_s report;
 
 		if (_accel_subs[uorb_index].copy(&report)) {
@@ -84,7 +94,7 @@ void TemperatureCompensationModule::parameters_update()
 	}
 
 	// Gyro
-	for (uint8_t uorb_index = 0; uorb_index < GYRO_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_GYRO_COUNT; uorb_index++) {
 		sensor_gyro_s report;
 
 		if (_gyro_subs[uorb_index].copy(&report)) {
@@ -102,7 +112,7 @@ void TemperatureCompensationModule::parameters_update()
 	}
 
 	// Mag
-	for (uint8_t uorb_index = 0; uorb_index < MAG_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_MAG_COUNT; uorb_index++) {
 		sensor_mag_s report;
 
 		if (_mag_subs[uorb_index].copy(&report)) {
@@ -120,7 +130,7 @@ void TemperatureCompensationModule::parameters_update()
 	}
 
 	// Baro
-	for (uint8_t uorb_index = 0; uorb_index < BARO_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_BARO_COUNT; uorb_index++) {
 		sensor_baro_s report;
 
 		if (_baro_subs[uorb_index].copy(&report)) {
@@ -140,10 +150,10 @@ void TemperatureCompensationModule::parameters_update()
 
 void TemperatureCompensationModule::accelPoll()
 {
-	float *offsets[] = {_corrections.accel_offset_0, _corrections.accel_offset_1, _corrections.accel_offset_2 };
+	float *offsets[] = {_corrections.accel_offset_0, _corrections.accel_offset_1, _corrections.accel_offset_2, _corrections.accel_offset_3};
 
 	// For each accel instance
-	for (uint8_t uorb_index = 0; uorb_index < ACCEL_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_ACCEL_COUNT; uorb_index++) {
 		sensor_accel_s sensor_accel;
 
 		// Grab temperature from accel
@@ -163,10 +173,10 @@ void TemperatureCompensationModule::accelPoll()
 
 void TemperatureCompensationModule::gyroPoll()
 {
-	float *offsets[] = {_corrections.gyro_offset_0, _corrections.gyro_offset_1, _corrections.gyro_offset_2 };
+	float *offsets[] = {_corrections.gyro_offset_0, _corrections.gyro_offset_1, _corrections.gyro_offset_2, _corrections.gyro_offset_3};
 
 	// For each gyro instance
-	for (uint8_t uorb_index = 0; uorb_index < GYRO_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_GYRO_COUNT; uorb_index++) {
 		sensor_gyro_s sensor_gyro;
 
 		// Grab temperature from gyro
@@ -198,10 +208,10 @@ void TemperatureCompensationModule::gyroPoll()
 
 void TemperatureCompensationModule::magPoll()
 {
-	float *offsets[] = {_corrections.mag_offset_0, _corrections.mag_offset_1, _corrections.mag_offset_2 };
+	float *offsets[] = {_corrections.mag_offset_0, _corrections.mag_offset_1};
 
 	// For each mag instance
-	for (uint8_t uorb_index = 0; uorb_index < MAG_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_MAG_COUNT; uorb_index++) {
 		sensor_mag_s sensor_mag;
 
 		// Grab temperature from report
@@ -233,10 +243,10 @@ void TemperatureCompensationModule::magPoll()
 
 void TemperatureCompensationModule::baroPoll()
 {
-	float *offsets[] = {&_corrections.baro_offset_0, &_corrections.baro_offset_1, &_corrections.baro_offset_2 };
+	float *offsets[] = {&_corrections.baro_offset_0, &_corrections.baro_offset_1};
 
 	// For each baro instance
-	for (uint8_t uorb_index = 0; uorb_index < BARO_COUNT_MAX; uorb_index++) {
+	for (uint8_t uorb_index = 0; uorb_index < MAX_BARO_COUNT; uorb_index++) {
 		sensor_baro_s sensor_baro;
 
 		// Grab temperature from report
@@ -306,7 +316,7 @@ void TemperatureCompensationModule::Run()
 				}
 
 				if (got_temperature_calibration_command) {
-					int ret = run_temperature_calibration(accel, baro, gyro, mag);
+					int ret = run_temperature_calibration(accel, gyro, mag, baro);
 
 					// publish ACK
 					vehicle_command_ack_s command_ack{};

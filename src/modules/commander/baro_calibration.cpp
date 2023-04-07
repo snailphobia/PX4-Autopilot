@@ -63,7 +63,7 @@ using namespace time_literals;
 
 static constexpr char sensor_name[] {"baro"};
 
-static constexpr int MAX_SENSOR_COUNT = 3;
+static constexpr int MAX_BARO_COUNT = 2;
 
 static float PressureToAltitude(float pressure_pa, float temperature)
 {
@@ -101,19 +101,19 @@ int do_baro_calibration(orb_advert_t *mavlink_log_pub)
 	int gps_altitude_sum_count = 0;
 
 
-	uORB::SubscriptionMultiArray<sensor_baro_s, MAX_SENSOR_COUNT> sensor_baro_subs{ORB_ID::sensor_baro};
-	calibration::Barometer calibration[MAX_SENSOR_COUNT] {};
+	uORB::SubscriptionMultiArray<sensor_baro_s, MAX_BARO_COUNT> sensor_baro_subs{ORB_ID::sensor_baro};
+	calibration::Barometer calibration[MAX_BARO_COUNT] {};
 
-	uint64_t timestamp_sample_sum[MAX_SENSOR_COUNT] {0};
-	float data_sum[MAX_SENSOR_COUNT] {};
-	float temperature_sum[MAX_SENSOR_COUNT] {};
-	int data_sum_count[MAX_SENSOR_COUNT] {};
+	uint64_t timestamp_sample_sum[MAX_BARO_COUNT] {0};
+	float data_sum[MAX_BARO_COUNT] {};
+	float temperature_sum[MAX_BARO_COUNT] {};
+	int data_sum_count[MAX_BARO_COUNT] {};
 
 	const hrt_abstime time_start_us = hrt_absolute_time();
 
 	while (hrt_elapsed_time(&time_start_us) < 3_s) {
 
-		for (int instance = 0; instance < MAX_SENSOR_COUNT; instance++) {
+		for (int instance = 0; instance < MAX_BARO_COUNT; instance++) {
 			sensor_baro_s sensor_baro;
 
 			while (sensor_baro_subs[instance].update(&sensor_baro)) {
@@ -166,7 +166,7 @@ int do_baro_calibration(orb_advert_t *mavlink_log_pub)
 
 	bool param_save = false;
 
-	for (int instance = 0; instance < MAX_SENSOR_COUNT; instance++) {
+	for (int instance = 0; instance < MAX_BARO_COUNT; instance++) {
 		if ((calibration[instance].device_id() != 0) && (data_sum_count[instance] > 0)) {
 
 			const float pressure_pa = data_sum[instance] / data_sum_count[instance];

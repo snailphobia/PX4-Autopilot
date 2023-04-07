@@ -151,21 +151,21 @@ using namespace time_literals;
 
 static constexpr char sensor_name[] {"accel"};
 
-static constexpr unsigned MAX_ACCEL_SENS = 3;
+static constexpr unsigned MAX_ACCEL_COUNT = 4;
 
 /// Data passed to calibration worker routine
 struct accel_worker_data_s {
 	orb_advert_t	*mavlink_log_pub{nullptr};
 	unsigned	done_count{0};
-	float		accel_ref[MAX_ACCEL_SENS][detect_orientation_side_count][3] {};
+	float		accel_ref[MAX_ACCEL_COUNT][detect_orientation_side_count][3] {};
 };
 
 // Read specified number of accelerometer samples, calculate average and dispersion.
-static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_SENS][detect_orientation_side_count][3],
+static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_COUNT][detect_orientation_side_count][3],
 		unsigned orient, unsigned samples_num)
 {
-	Vector3f accel_sum[MAX_ACCEL_SENS] {};
-	unsigned counts[MAX_ACCEL_SENS] {};
+	Vector3f accel_sum[MAX_ACCEL_COUNT] {};
+	unsigned counts[MAX_ACCEL_COUNT] {};
 
 	unsigned errcount = 0;
 
@@ -174,16 +174,17 @@ static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_SENS
 	sensor_correction_s sensor_correction{};
 	sensor_correction_sub.copy(&sensor_correction);
 
-	uORB::SubscriptionBlocking<sensor_accel_s> accel_sub[MAX_ACCEL_SENS] {
+	uORB::SubscriptionBlocking<sensor_accel_s> accel_sub[MAX_ACCEL_COUNT] {
 		{ORB_ID(sensor_accel), 0, 0},
 		{ORB_ID(sensor_accel), 0, 1},
 		{ORB_ID(sensor_accel), 0, 2},
+		{ORB_ID(sensor_accel), 0, 3}
 	};
 
 	/* use the first sensor to pace the readout, but do per-sensor counts */
 	while (counts[0] < samples_num) {
 		if (accel_sub[0].updatedBlocking(100000)) {
-			for (unsigned accel_index = 0; accel_index < MAX_ACCEL_SENS; accel_index++) {
+			for (unsigned accel_index = 0; accel_index < MAX_ACCEL_COUNT; accel_index++) {
 				sensor_accel_s arp;
 
 				while (accel_sub[accel_index].update(&arp)) {
@@ -192,7 +193,7 @@ static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_SENS
 					sensor_correction_sub.update(&sensor_correction);
 
 					if (sensor_correction.timestamp > 0 && arp.device_id != 0) {
-						for (uint8_t correction_index = 0; correction_index < MAX_ACCEL_SENS; correction_index++) {
+						for (uint8_t correction_index = 0; correction_index < MAX_ACCEL_COUNT; correction_index++) {
 							if (sensor_correction.accel_device_ids[correction_index] == arp.device_id) {
 								switch (correction_index) {
 								case 0:
@@ -203,6 +204,9 @@ static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_SENS
 									break;
 								case 2:
 									offset = Vector3f{sensor_correction.accel_offset_2};
+									break;
+								case 3:
+									offset = Vector3f{sensor_correction.accel_offset_3};
 									break;
 								}
 							}
@@ -228,11 +232,11 @@ static calibrate_return read_accelerometer_avg(float (&accel_avg)[MAX_ACCEL_SENS
 	// rotate sensor measurements from sensor to body frame using board rotation matrix
 	const Dcmf board_rotation = calibration::GetBoardRotationMatrix();
 
-	for (unsigned s = 0; s < MAX_ACCEL_SENS; s++) {
+	for (unsigned s = 0; s < MAX_ACCEL_COUNT; s++) {
 		accel_sum[s] = board_rotation * accel_sum[s];
 	}
 
-	for (unsigned s = 0; s < MAX_ACCEL_SENS; s++) {
+	for (unsigned s = 0; s < MAX_ACCEL_COUNT; s++) {
 		const Vector3f avg{accel_sum[s] / counts[s]};
 		avg.copyTo(accel_avg[s][orient]);
 	}
@@ -251,7 +255,7 @@ static calibrate_return accel_calibration_worker(detect_orientation_return orien
 	read_accelerometer_avg(worker_data->accel_ref, orientation, samples_num);
 
 	// check accel
-	for (unsigned accel_index = 0; accel_index < MAX_ACCEL_SENS; accel_index++) {
+	for (unsigned accel_index = 0; accel_index < MAX_ACCEL_COUNT; accel_index++) {
 		switch (orientation) {
 		case ORIENTATION_TAIL_DOWN:    // [ g, 0, 0 ]
 			if (worker_data->accel_ref[accel_index][ORIENTATION_TAIL_DOWN][0] < 0.f) {
@@ -322,10 +326,10 @@ int do_accel_calibration(orb_advert_t *mavlink_log_pub)
 {
 	calibration_log_info(mavlink_log_pub, CAL_QGC_STARTED_MSG, sensor_name);
 
-	calibration::Accelerometer calibrations[MAX_ACCEL_SENS] {};
+	calibration::Accelerometer calibrations[MAX_ACCEL_COUNT] {};
 	unsigned active_sensors = 0;
 
-	for (uint8_t cur_accel = 0; cur_accel < MAX_ACCEL_SENS; cur_accel++) {
+	for (uint8_t cur_accel = 0; cur_accel < MAX_ACCEL_COUNT; cur_accel++) {
 		uORB::SubscriptionData<sensor_accel_s> accel_sub{ORB_ID(sensor_accel), cur_accel};
 
 		if (accel_sub.advertised() && (accel_sub.get().device_id != 0) && (accel_sub.get().timestamp > 0)) {
@@ -363,7 +367,7 @@ int do_accel_calibration(orb_advert_t *mavlink_log_pub)
 		bool param_save = false;
 		bool failed = true;
 
-		for (unsigned i = 0; i < MAX_ACCEL_SENS; i++) {
+		for (unsigned i = 0; i < MAX_ACCEL_COUNT; i++) {
 			if (i < active_sensors) {
 				// calculate offsets
 				Vector3f offset{};
@@ -467,10 +471,10 @@ int do_accel_calibration_quick(orb_advert_t *mavlink_log_pub)
 	sensor_correction_s sensor_correction{};
 	sensor_correction_sub.copy(&sensor_correction);
 
-	uORB::SubscriptionMultiArray<sensor_accel_s, MAX_ACCEL_SENS> accel_subs{ORB_ID::sensor_accel};
+	uORB::SubscriptionMultiArray<sensor_accel_s, MAX_ACCEL_COUNT> accel_subs{ORB_ID::sensor_accel};
 
 	/* use the first sensor to pace the readout, but do per-sensor counts */
-	for (unsigned accel_index = 0; accel_index < MAX_ACCEL_SENS; accel_index++) {
+	for (unsigned accel_index = 0; accel_index < MAX_ACCEL_COUNT; accel_index++) {
 		sensor_accel_s arp{};
 		Vector3f accel_sum{};
 		unsigned count = 0;
@@ -481,7 +485,7 @@ int do_accel_calibration_quick(orb_advert_t *mavlink_log_pub)
 				Vector3f offset{0, 0, 0};
 
 				if (sensor_correction.timestamp > 0) {
-					for (uint8_t correction_index = 0; correction_index < MAX_ACCEL_SENS; correction_index++) {
+					for (uint8_t correction_index = 0; correction_index < MAX_ACCEL_COUNT; correction_index++) {
 						if (sensor_correction.accel_device_ids[correction_index] == arp.device_id) {
 							switch (correction_index) {
 							case 0:
@@ -492,6 +496,9 @@ int do_accel_calibration_quick(orb_advert_t *mavlink_log_pub)
 								break;
 							case 2:
 								offset = Vector3f{sensor_correction.accel_offset_2};
+								break;
+							case 3:
+								offset = Vector3f{sensor_correction.accel_offset_3};
 								break;
 							}
 						}

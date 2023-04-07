@@ -71,7 +71,7 @@ using namespace time_literals;
 
 static constexpr char sensor_name[] {"mag"};
 
-static constexpr int MAX_MAGS = 3;
+static constexpr int MAX_MAG_COUNT = 2;
 
 static constexpr float MAG_SPHERE_RADIUS_DEFAULT = 0.2f;
 
@@ -91,13 +91,13 @@ struct mag_worker_data_t {
 	bool		side_data_collected[detect_orientation_side_count];
 	unsigned int	calibration_points_perside;
 	uint64_t	calibration_interval_perside_us;
-	unsigned int	calibration_counter_total[MAX_MAGS];
+	unsigned int	calibration_counter_total[MAX_MAG_COUNT];
 
-	float		*x[MAX_MAGS];
-	float		*y[MAX_MAGS];
-	float		*z[MAX_MAGS];
+	float		*x[MAX_MAG_COUNT];
+	float		*y[MAX_MAG_COUNT];
+	float		*z[MAX_MAG_COUNT];
 
-	calibration::Magnetometer calibration[MAX_MAGS] {};
+	calibration::Magnetometer calibration[MAX_MAG_COUNT] {};
 };
 
 int do_mag_calibration(orb_advert_t *mavlink_log_pub)
@@ -321,10 +321,9 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 		}
 	}
 
-	uORB::SubscriptionBlocking<sensor_mag_s> mag_sub[MAX_MAGS] {
+	uORB::SubscriptionBlocking<sensor_mag_s> mag_sub[MAX_MAG_COUNT] {
 		{ORB_ID(sensor_mag), 0, 0},
-		{ORB_ID(sensor_mag), 0, 1},
-		{ORB_ID(sensor_mag), 0, 2},
+		{ORB_ID(sensor_mag), 0, 1}
 	};
 
 	uint64_t calibration_deadline = hrt_absolute_time() + worker_data->calibration_interval_perside_us;
@@ -341,9 +340,9 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 
 		if (mag_sub[0].updatedBlocking(1000_ms)) {
 			bool rejected = false;
-			Vector3f new_samples[MAX_MAGS] {};
+			Vector3f new_samples[MAX_MAG_COUNT] {};
 
-			for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+			for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 				if (worker_data->calibration[cur_mag].device_id() != 0) {
 					bool updated = false;
 					sensor_mag_s mag;
@@ -384,7 +383,7 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 
 			// Keep calibration of all mags in lockstep
 			if (!rejected) {
-				for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+				for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 					if (worker_data->calibration[cur_mag].device_id() != 0) {
 						worker_data->x[cur_mag][worker_data->calibration_counter_total[cur_mag]] = new_samples[cur_mag](0);
 						worker_data->y[cur_mag][worker_data->calibration_counter_total[cur_mag]] = new_samples[cur_mag](1);
@@ -402,7 +401,7 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 				status.calibration_points_perside = worker_data->calibration_points_perside;
 				status.calibration_interval_perside_us = worker_data->calibration_interval_perside_us;
 
-				for (size_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+				for (size_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 					status.calibration_counter_total[cur_mag] = worker_data->calibration_counter_total[cur_mag];
 					status.side_data_collected[cur_mag] = worker_data->side_data_collected[cur_mag];
 
@@ -474,8 +473,8 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 	const unsigned orb_mag_count = orb_group_count(ORB_ID(sensor_mag));
 
 	// Warn that we will not calibrate more than MAX_GYROS gyroscopes
-	if (orb_mag_count > MAX_MAGS) {
-		calibration_log_critical(mavlink_log_pub, "Detected %u mags, but will calibrate only %u", orb_mag_count, MAX_MAGS);
+	if (orb_mag_count > MAX_MAG_COUNT) {
+		calibration_log_critical(mavlink_log_pub, "Detected %u mags, but will calibrate only %u", orb_mag_count, MAX_MAG_COUNT);
 
 	} else if (orb_mag_count < 1) {
 		calibration_log_critical(mavlink_log_pub, "No mags found");
@@ -515,7 +514,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 		}
 	}
 
-	for (size_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+	for (size_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 		// Initialize to no memory allocated
 		worker_data.x[cur_mag] = nullptr;
 		worker_data.y[cur_mag] = nullptr;
@@ -525,7 +524,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 
 	const unsigned int calibration_points_maxcount = worker_data.calibration_sides * worker_data.calibration_points_perside;
 
-	for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+	for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 
 		uORB::SubscriptionData<sensor_mag_s> mag_sub{ORB_ID(sensor_mag), cur_mag};
 
@@ -561,14 +560,14 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 	}
 
 	// calibration values for each mag
-	Vector3f sphere[MAX_MAGS];
-	Vector3f diag[MAX_MAGS];
-	Vector3f offdiag[MAX_MAGS];
-	float sphere_radius[MAX_MAGS];
+	Vector3f sphere[MAX_MAG_COUNT];
+	Vector3f diag[MAX_MAG_COUNT];
+	Vector3f offdiag[MAX_MAG_COUNT];
+	float sphere_radius[MAX_MAG_COUNT];
 
 	const float mag_sphere_radius = get_sphere_radius();
 
-	for (size_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+	for (size_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 		sphere_radius[cur_mag] = mag_sphere_radius;
 		sphere[cur_mag].zero();
 		diag[cur_mag] = Vector3f{1.f, 1.f, 1.f};
@@ -577,7 +576,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 
 	if (result == calibrate_return_ok) {
 		// Sphere fit the data to get calibration values
-		for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+		for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 			if (worker_data.calibration[cur_mag].device_id() != 0) {
 				// Mag in this slot is available and we should have values for it to calibrate
 
@@ -659,7 +658,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 	// DO NOT REMOVE! Critical validation data!
 	if (result == calibrate_return_ok) {
 		// Print uncalibrated data points
-		for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+		for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 			if (worker_data.calibration_counter_total[cur_mag] == 0) {
 				continue;
 			}
@@ -706,7 +705,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 			// find first internal mag to use as reference
 			int internal_index = -1;
 
-			for (unsigned cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+			for (unsigned cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 				if (!worker_data.calibration[cur_mag].external() && (worker_data.calibration[cur_mag].device_id() != 0)) {
 					internal_index = cur_mag;
 					break;
@@ -719,7 +718,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 				const Dcmf board_rotation = calibration::GetBoardRotationMatrix();
 
 				// apply new calibrations to all raw sensor data before comparison
-				for (unsigned cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+				for (unsigned cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 					if (worker_data.calibration[cur_mag].device_id() != 0) {
 
 						float scale_data[9] {
@@ -752,7 +751,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 				}
 
 				// external mags try all rotations and compute mean square error (MSE) compared with first internal mag
-				for (int cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+				for (int cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 					if ((worker_data.calibration[cur_mag].device_id() != 0) && (cur_mag != internal_index)) {
 
 						const int last_sample_index = math::min(worker_data.calibration_counter_total[internal_index],
@@ -882,7 +881,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 
 
 	// Data points are no longer needed
-	for (size_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+	for (size_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 		free(worker_data.x[cur_mag]);
 		free(worker_data.y[cur_mag]);
 		free(worker_data.z[cur_mag]);
@@ -899,7 +898,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 		bool param_save = false;
 		bool failed = true;
 
-		for (unsigned cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+		for (unsigned cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 
 			auto &current_cal = worker_data.calibration[cur_mag];
 
@@ -1010,7 +1009,7 @@ int do_mag_calibration_quick(orb_advert_t *mavlink_log_pub, float heading_radian
 		bool param_save = false;
 		bool failed = true;
 
-		for (uint8_t cur_mag = 0; cur_mag < MAX_MAGS; cur_mag++) {
+		for (uint8_t cur_mag = 0; cur_mag < MAX_MAG_COUNT; cur_mag++) {
 			uORB::Subscription mag_sub{ORB_ID(sensor_mag), cur_mag};
 			sensor_mag_s mag{};
 			mag_sub.copy(&mag);

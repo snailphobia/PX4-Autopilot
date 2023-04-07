@@ -46,8 +46,12 @@
 
 #include "polyfit.hpp"
 
-#define SENSOR_COUNT_MAX		3
+#define SENSOR_COUNT_MAX	4
 
+#define MAX_ACCEL_COUNT		4
+#define MAX_GYRO_COUNT		4
+#define MAX_MAG_COUNT		2
+#define MAX_BARO_COUNT		2
 
 #define TC_ERROR_INITIAL_TEMP_TOO_HIGH 110 ///< starting temperature was above the configured allowed temperature
 #define TC_ERROR_COMMUNICATION         112 ///< no sensors found

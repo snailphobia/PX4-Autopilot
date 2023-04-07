@@ -92,9 +92,6 @@ void Magnetometer::SensorCorrectionsUpdate(bool force)
 					case 1:
 						_thermal_offset = Vector3f{corrections.mag_offset_1};
 						return;
-					case 2:
-						_thermal_offset = Vector3f{corrections.mag_offset_2};
-						return;
 					}
 				}
 			}

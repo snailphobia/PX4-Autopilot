@@ -49,21 +49,21 @@
 namespace temperature_compensation
 {
 
-static constexpr uint8_t ACCEL_COUNT_MAX = 3;
-static constexpr uint8_t GYRO_COUNT_MAX  = 3;
-static constexpr uint8_t MAG_COUNT_MAX   = 3;
-static constexpr uint8_t BARO_COUNT_MAX  = 3;
+static constexpr uint8_t MAX_ACCEL_COUNT = 4;
+static constexpr uint8_t MAX_GYRO_COUNT  = 4;
+static constexpr uint8_t MAX_MAG_COUNT   = 2;
+static constexpr uint8_t MAX_BARO_COUNT  = 2;
 
-static_assert(ACCEL_COUNT_MAX == 3,
-	      "ACCEL_COUNT_MAX must be 3 (if changed, add/remove TC_* params to match the count)");
-static_assert(GYRO_COUNT_MAX == 3, "GYRO_COUNT_MAX must be 3 (if changed, add/remove TC_* params to match the count)");
-static_assert(MAG_COUNT_MAX  == 3, "MAG_COUNT_MAX must be 3 (if changed, add/remove TC_* params to match the count)");
-static_assert(BARO_COUNT_MAX == 3, "BARO_COUNT_MAX must be 3 (if changed, add/remove TC_* params to match the count)");
+static_assert(MAX_ACCEL_COUNT == 4,
+	      "MAX_ACCEL_COUNT must be 4 (if changed, add/remove TC_* params to match the count)");
+static_assert(MAX_GYRO_COUNT == 4, "MAX_GYRO_COUNT must be 4 (if changed, add/remove TC_* params to match the count)");
+static_assert(MAX_MAG_COUNT  == 2, "MAX_MAG_COUNT must be 2 (if changed, add/remove TC_* params to match the count)");
+static_assert(MAX_BARO_COUNT == 2, "MAX_BARO_COUNT must be 2 (if changed, add/remove TC_* params to match the count)");
 
-static constexpr uint8_t SENSOR_COUNT_MAX = 3;
+static constexpr uint8_t SENSOR_COUNT_MAX = 4;
 
 /**
- ** class TemperatureCompensation
+ * class TemperatureCompensation
  * Applies temperature compensation to sensor data. Loads the parameters from PX4 param storage.
  */
 class TemperatureCompensation
@@ -75,7 +75,8 @@ public:
 
 	/** supply information which device_id matches a specific uORB topic_instance
 	 *  (needed if a system has multiple sensors of the same type)
-	 *  @return index for compensation parameter entry containing matching device ID on success, <0 otherwise */
+	 *  @return index for compensation parameter entry containing matching device ID on success, <0 otherwise
+	 */
 	int set_sensor_id_accel(uint32_t device_id, int topic_instance);
 	int set_sensor_id_gyro(uint32_t device_id, int topic_instance);
 	int set_sensor_id_mag(uint32_t device_id, int topic_instance);
@@ -101,21 +102,21 @@ public:
 	void print_status();
 private:
 
-	/* Struct containing parameters used by the single axis 5th order temperature compensation algorithm
-
-	Input:
-
-	measured_temp : temperature measured at the sensor (deg C)
-	raw_value : reading from the sensor before compensation
-	corrected_value : reading from the sensor after compensation for errors
-
-	Compute:
-
-	delta_temp = measured_temp - ref_temp
-	offset = x5 * delta_temp^5 + x4 * delta_temp^4 + x3 * delta_temp^3 + x2 * delta_temp^2 + x1 * delta_temp + x0
-	corrected_value = raw_value - offset
-
-	*/
+	/**
+	 * Struct containing parameters used by the single axis 5th order temperature compensation algorithm
+	 *
+	 * Input:
+	 *
+	 * measured_temp : temperature measured at the sensor (deg C)
+	 * raw_value : reading from the sensor before compensation
+	 * corrected_value : reading from the sensor after compensation for errors
+	 *
+	 * Compute:
+	 *
+	 * delta_temp = measured_temp - ref_temp
+	 * offset = x5 * delta_temp^5 + x4 * delta_temp^4 + x3 * delta_temp^3 + x2 * delta_temp^2 + x1 * delta_temp + x0
+	 * corrected_value = raw_value - offset
+	 */
 	struct SensorCalData1D {
 		int32_t ID;
 		float x5;
@@ -143,20 +144,20 @@ private:
 	};
 
 
-	/* Struct containing parameters used by the 3-axis 3rd order temperature compensation algorithm
-
-	Input:
-
-	measured_temp : temperature measured at the sensor (deg C)
-	raw_value[3] : XYZ readings from the sensor before compensation
-	corrected_value[3] : XYZ readings from the sensor after compensation for errors
-
-	Compute for each measurement index:
-
-	delta_temp = measured_temp - ref_temp
-	offset = x3 * delta_temp^3 + x2 * delta_temp^2 + x1 * delta_temp + x0
-	corrected_value = raw_value - offset
-
+	/**
+	 * Struct containing parameters used by the 3-axis 3rd order temperature compensation algorithm
+	 *
+	 * Input:
+	 *
+	 * measured_temp : temperature measured at the sensor (deg C)
+	 * raw_value[3] : XYZ readings from the sensor before compensation
+	 * corrected_value[3] : XYZ readings from the sensor after compensation for errors
+	 *
+	 * Compute for each measurement index:
+	 *
+	 * delta_temp = measured_temp - ref_temp
+	 * offset = x3 * delta_temp^3 + x2 * delta_temp^2 + x1 * delta_temp + x0
+	 * corrected_value = raw_value - offset
 	 */
 	struct SensorCalData3D {
 		int32_t ID;		/**< sensor device ID*/
@@ -183,33 +184,32 @@ private:
 	// create a struct containing all thermal calibration parameters
 	struct Parameters {
 		int32_t accel_tc_enable{0};
-		SensorCalData3D accel_cal_data[ACCEL_COUNT_MAX] {};
+		SensorCalData3D accel_cal_data[MAX_ACCEL_COUNT] {};
 
 		int32_t gyro_tc_enable{0};
-		SensorCalData3D gyro_cal_data[GYRO_COUNT_MAX] {};
+		SensorCalData3D gyro_cal_data[MAX_GYRO_COUNT] {};
 
 		int32_t mag_tc_enable{0};
-		SensorCalData3D mag_cal_data[MAG_COUNT_MAX] {};
+		SensorCalData3D mag_cal_data[MAX_MAG_COUNT] {};
 
 		int32_t baro_tc_enable{0};
-		SensorCalData1D baro_cal_data[BARO_COUNT_MAX] {};
+		SensorCalData1D baro_cal_data[MAX_BARO_COUNT] {};
 	};
 
 	// create a struct containing the handles required to access all calibration parameters
 	struct ParameterHandles {
 		param_t accel_tc_enable{PARAM_INVALID};
-		SensorCalHandles3D accel_cal_handles[ACCEL_COUNT_MAX] {};
+		SensorCalHandles3D accel_cal_handles[MAX_ACCEL_COUNT] {};
 
 		param_t gyro_tc_enable{PARAM_INVALID};
-		SensorCalHandles3D gyro_cal_handles[GYRO_COUNT_MAX] {};
+		SensorCalHandles3D gyro_cal_handles[MAX_GYRO_COUNT] {};
 
 		param_t mag_tc_enable{PARAM_INVALID};
-		SensorCalHandles3D mag_cal_handles[MAG_COUNT_MAX] {};
+		SensorCalHandles3D mag_cal_handles[MAX_MAG_COUNT] {};
 
 		param_t baro_tc_enable{PARAM_INVALID};
-		SensorCalHandles1D baro_cal_handles[BARO_COUNT_MAX] {};
+		SensorCalHandles1D baro_cal_handles[MAX_BARO_COUNT] {};
 	};
-
 
 	/**
 	 * initialize ParameterHandles struct
@@ -217,48 +217,41 @@ private:
 	 */
 	static int initialize_parameter_handles(ParameterHandles &parameter_handles);
 
-
 	/**
-
-	Calculate the offset required to compensate the sensor for temperature effects using a 5th order method
-	If the measured temperature is outside the calibration range, clip the temperature to remain within the range and return false.
-	If the measured temperature is within the calibration range, return true.
-
-	Arguments:
-
-	coef : reference to struct containing calibration coefficients
-	measured_temp : temperature measured at the sensor (deg C)
-	offset : reference to sensor offset
-
-	Returns:
-
-	Boolean true if the measured temperature is inside the valid range for the compensation
-
-	*/
+	 * Calculate the offset required to compensate the sensor for temperature effects using a 5th order method
+	 * If the measured temperature is outside the calibration range, clip the temperature to remain within the range and return false.
+	 * If the measured temperature is within the calibration range, return true.
+	 *
+	 * Arguments:
+	 *
+	 * coef : reference to struct containing calibration coefficients
+	 * measured_temp : temperature measured at the sensor (deg C)
+	 * offset : reference to sensor offset
+	 *
+	 * Returns:
+	 *
+	 * Boolean true if the measured temperature is inside the valid range for the compensation
+	 */
 	bool calc_thermal_offsets_1D(SensorCalData1D &coef, float measured_temp, float &offset);
 
 	/**
-
-	Calculate the offsets required to compensate the sensor for temperature effects
-	If the measured temperature is outside the calibration range, clip the temperature to remain within the range and return false.
-	If the measured temperature is within the calibration range, return true.
-
-	Arguments:
-
-	coef : reference to struct containing calibration coefficients
-	measured_temp : temperature measured at the sensor (deg C)
-	offset : reference to sensor offset - array of 3
-
-	Returns:
-
-	Boolean true if the measured temperature is inside the valid range for the compensation
-
-	*/
+	 * Calculate the offsets required to compensate the sensor for temperature effects
+	 * If the measured temperature is outside the calibration range, clip the temperature to remain within the range and return false.
+	 * If the measured temperature is within the calibration range, return true.
+	 *
+	 * Arguments:
+	 *
+	 * coef : reference to struct containing calibration coefficients
+	 * measured_temp : temperature measured at the sensor (deg C)
+	 * offset : reference to sensor offset - array of 3
+	 *
+	 * Returns:
+	 *
+	 * Boolean true if the measured temperature is inside the valid range for the compensation
+	 */
 	bool calc_thermal_offsets_3D(const SensorCalData3D &coef, float measured_temp, float offset[]);
 
-
 	Parameters _parameters;
-
 
 	struct PerSensorData {
 
@@ -277,7 +270,7 @@ private:
 			}
 		}
 
-		uint8_t device_mapping[SENSOR_COUNT_MAX] {}; /// map a topic instance to the parameters index
+		uint8_t device_mapping[SENSOR_COUNT_MAX] {}; // map a topic instance to the parameters index
 		float last_temperature[SENSOR_COUNT_MAX] {};
 	};
 

@@ -31,84 +31,132 @@
  *
  ****************************************************************************/
 
-/* Barometer 2 */
+/* Accelerometer 3 */
 
 /**
- * ID of Barometer that the calibration is for.
+ * ID of Accelerometer that the calibration is for.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_INT32(TC_B2_ID, 0);
+PARAM_DEFINE_INT32(TC_A3_ID, 0);
 
 /**
- * Barometer offset temperature ^5 polynomial coefficient.
+ * Accelerometer offset temperature ^3 polynomial coefficient - X axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X5, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X3_0, 0.0f);
 
 /**
- * Barometer offset temperature ^4 polynomial coefficient.
+ * Accelerometer offset temperature ^3 polynomial coefficient - Y axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X4, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X3_1, 0.0f);
 
 /**
- * Barometer offset temperature ^3 polynomial coefficient.
+ * Accelerometer offset temperature ^3 polynomial coefficient - Z axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X3, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X3_2, 0.0f);
 
 /**
- * Barometer offset temperature ^2 polynomial coefficient.
+ * Accelerometer offset temperature ^2 polynomial coefficient - X axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X2, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X2_0, 0.0f);
 
 /**
- * Barometer offset temperature ^1 polynomial coefficients.
+ * Accelerometer offset temperature ^2 polynomial coefficient - Y axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X1, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X2_1, 0.0f);
 
 /**
- * Barometer offset temperature ^0 polynomial coefficient.
+ * Accelerometer offset temperature ^2 polynomial coefficient - Z axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_X0, 0.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X2_2, 0.0f);
 
 /**
- * Barometer calibration reference temperature.
+ * Accelerometer offset temperature ^1 polynomial coefficient - X axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_TREF, 40.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X1_0, 0.0f);
 
 /**
- * Barometer calibration minimum temperature.
+ * Accelerometer offset temperature ^1 polynomial coefficient - Y axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_TMIN, 5.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X1_1, 0.0f);
 
 /**
- * Barometer calibration maximum temperature.
+ * Accelerometer offset temperature ^1 polynomial coefficient - Z axis.
  *
  * @group Thermal Compensation
  * @category system
  */
-PARAM_DEFINE_FLOAT(TC_B2_TMAX, 75.0f);
+PARAM_DEFINE_FLOAT(TC_A3_X1_2, 0.0f);
+
+/**
+ * Accelerometer offset temperature ^0 polynomial coefficient - X axis.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_X0_0, 0.0f);
+
+/**
+ * Accelerometer offset temperature ^0 polynomial coefficient - Y axis.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_X0_1, 0.0f);
+
+/**
+ * Accelerometer offset temperature ^0 polynomial coefficient - Z axis.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_X0_2, 0.0f);
+
+/**
+ * Accelerometer calibration reference temperature.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_TREF, 25.0f);
+
+/**
+ * Accelerometer calibration minimum temperature.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_TMIN, 0.0f);
+
+/**
+ * Accelerometer calibration maximum temperature.
+ *
+ * @group Thermal Compensation
+ * @category system
+ */
+PARAM_DEFINE_FLOAT(TC_A3_TMAX, 100.0f);

@@ -61,7 +61,7 @@
 
 static constexpr char sensor_name[] {"gyro"};
 
-static constexpr unsigned MAX_GYROS = 3;
+static constexpr unsigned MAX_GYRO_COUNT = 4;
 
 using matrix::Vector3f;
 
@@ -69,9 +69,9 @@ using matrix::Vector3f;
 struct gyro_worker_data_t {
 	orb_advert_t *mavlink_log_pub{nullptr};
 
-	calibration::Gyroscope calibrations[MAX_GYROS] {};
+	calibration::Gyroscope calibrations[MAX_GYRO_COUNT] {};
 
-	Vector3f offset[MAX_GYROS] {};
+	Vector3f offset[MAX_GYRO_COUNT] {};
 
 	math::MedianFilter<float, 9> filter[3] {};
 };
@@ -79,14 +79,15 @@ struct gyro_worker_data_t {
 static calibrate_return gyro_calibration_worker(gyro_worker_data_t &worker_data)
 {
 	const hrt_abstime calibration_started = hrt_absolute_time();
-	unsigned calibration_counter[MAX_GYROS] {};
+	unsigned calibration_counter[MAX_GYRO_COUNT] {};
 	static constexpr unsigned CALIBRATION_COUNT = 250;
 	unsigned poll_errcount = 0;
 
-	uORB::SubscriptionBlocking<sensor_gyro_s> gyro_sub[MAX_GYROS] {
+	uORB::SubscriptionBlocking<sensor_gyro_s> gyro_sub[MAX_GYRO_COUNT] {
 		{ORB_ID(sensor_gyro), 0, 0},
 		{ORB_ID(sensor_gyro), 0, 1},
 		{ORB_ID(sensor_gyro), 0, 2},
+		{ORB_ID(sensor_gyro), 0, 3}
 	};
 
 	/* use slowest gyro to pace, but count correctly per-gyro for statistics */
@@ -100,7 +101,7 @@ static calibrate_return gyro_calibration_worker(gyro_worker_data_t &worker_data)
 		if (gyro_sub[0].updatedBlocking(100000)) {
 			unsigned update_count = CALIBRATION_COUNT;
 
-			for (unsigned gyro_index = 0; gyro_index < MAX_GYROS; gyro_index++) {
+			for (unsigned gyro_index = 0; gyro_index < MAX_GYRO_COUNT; gyro_index++) {
 				if (worker_data.calibrations[gyro_index].device_id() != 0) {
 
 					if (calibration_counter[gyro_index] >= CALIBRATION_COUNT) {
@@ -153,7 +154,7 @@ static calibrate_return gyro_calibration_worker(gyro_worker_data_t &worker_data)
 		}
 	}
 
-	for (unsigned s = 0; s < MAX_GYROS; s++) {
+	for (unsigned s = 0; s < MAX_GYRO_COUNT; s++) {
 		if ((worker_data.calibrations[s].device_id() != 0) && (calibration_counter[s] < CALIBRATION_COUNT / 2)) {
 			calibration_log_critical(worker_data.mavlink_log_pub, "ERROR: missing data, sensor %d", s)
 			return calibrate_return_error;
@@ -177,16 +178,17 @@ int do_gyro_calibration(orb_advert_t *mavlink_log_pub)
 	// We should not try to subscribe if the topic doesn't actually exist and can be counted.
 	const unsigned orb_gyro_count = orb_group_count(ORB_ID(sensor_gyro));
 
-	// Warn that we will not calibrate more than MAX_GYROS gyroscopes
-	if (orb_gyro_count > MAX_GYROS) {
-		calibration_log_critical(mavlink_log_pub, "Detected %u gyros, but will calibrate only %u", orb_gyro_count, MAX_GYROS);
+	// Warn that we will not calibrate more than MAX_GYRO_COUNT gyroscopes
+	if (orb_gyro_count > MAX_GYRO_COUNT) {
+		calibration_log_critical(mavlink_log_pub, "Detected %u gyros, but will calibrate only %u", orb_gyro_count,
+					 MAX_GYRO_COUNT);
 
 	} else if (orb_gyro_count < 1) {
 		calibration_log_critical(mavlink_log_pub, "No gyros found");
 		return PX4_ERROR;
 	}
 
-	for (uint8_t cur_gyro = 0; cur_gyro < MAX_GYROS; cur_gyro++) {
+	for (uint8_t cur_gyro = 0; cur_gyro < MAX_GYRO_COUNT; cur_gyro++) {
 		uORB::SubscriptionData<sensor_gyro_s> gyro_sub{ORB_ID(sensor_gyro), cur_gyro};
 
 		if (gyro_sub.advertised() && (gyro_sub.get().device_id != 0) && (gyro_sub.get().timestamp > 0)) {
@@ -251,7 +253,7 @@ int do_gyro_calibration(orb_advert_t *mavlink_log_pub)
 		bool param_save = false;
 		bool failed = true;
 
-		for (unsigned uorb_index = 0; uorb_index < MAX_GYROS; uorb_index++) {
+		for (unsigned uorb_index = 0; uorb_index < MAX_GYRO_COUNT; uorb_index++) {
 
 			auto &calibration = worker_data.calibrations[uorb_index];
 
