@@ -64,11 +64,11 @@ void Ekf::resetHorizontalVelocityTo(const Vector2f &new_horz_vel, const Vector2f
 	_state.vel.xy() = new_horz_vel;
 
 	if (PX4_ISFINITE(new_horz_vel_var(0))) {
-		P.uncorrelateCovarianceSetVariance<1>(4, math::max(sq(0.01f), new_horz_vel_var(0)));
+		P.uncorrelateCovarianceSetVariance<1>(State::vel.idx, math::max(sq(0.01f), new_horz_vel_var(0)));
 	}
 
 	if (PX4_ISFINITE(new_horz_vel_var(1))) {
-		P.uncorrelateCovarianceSetVariance<1>(5, math::max(sq(0.01f), new_horz_vel_var(1)));
+		P.uncorrelateCovarianceSetVariance<1>(State::vel.idx + 1, math::max(sq(0.01f), new_horz_vel_var(1)));
 	}
 
 	_output_predictor.resetHorizontalVelocityTo(delta_horz_vel);
@@ -94,7 +94,7 @@ void Ekf::resetVerticalVelocityTo(float new_vert_vel, float new_vert_vel_var)
 	_state.vel(2) = new_vert_vel;
 
 	if (PX4_ISFINITE(new_vert_vel_var)) {
-		P.uncorrelateCovarianceSetVariance<1>(6, math::max(sq(0.01f), new_vert_vel_var));
+		P.uncorrelateCovarianceSetVariance<1>(State::vel.idx + 2, math::max(sq(0.01f), new_vert_vel_var));
 	}
 
 	_output_predictor.resetVerticalVelocityTo(delta_vert_vel);
@@ -130,11 +130,11 @@ void Ekf::resetHorizontalPositionTo(const Vector2f &new_horz_pos, const Vector2f
 	_state.pos.xy() = new_horz_pos;
 
 	if (PX4_ISFINITE(new_horz_pos_var(0))) {
-		P.uncorrelateCovarianceSetVariance<1>(7, math::max(sq(0.01f), new_horz_pos_var(0)));
+		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx, math::max(sq(0.01f), new_horz_pos_var(0)));
 	}
 
 	if (PX4_ISFINITE(new_horz_pos_var(1))) {
-		P.uncorrelateCovarianceSetVariance<1>(8, math::max(sq(0.01f), new_horz_pos_var(1)));
+		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx + 1, math::max(sq(0.01f), new_horz_pos_var(1)));
 	}
 
 	_output_predictor.resetHorizontalPositionTo(delta_horz_pos);
@@ -177,7 +177,7 @@ void Ekf::resetVerticalPositionTo(const float new_vert_pos, float new_vert_pos_v
 
 	if (PX4_ISFINITE(new_vert_pos_var)) {
 		// the state variance is the same as the observation
-		P.uncorrelateCovarianceSetVariance<1>(9, math::max(sq(0.01f), new_vert_pos_var));
+		P.uncorrelateCovarianceSetVariance<1>(State::pos.idx + 2, math::max(sq(0.01f), new_vert_pos_var));
 	}
 
 	const float delta_z = new_vert_pos - old_vert_pos;
@@ -387,14 +387,14 @@ void Ekf::getTerrainFlowInnovVar(float flow_innov_var[2]) const
 matrix::Vector<float, 24> Ekf::getStateAtFusionHorizonAsVector() const
 {
 	matrix::Vector<float, 24> state;
-	state.slice<4, 1>(0, 0) = _state.quat_nominal;
-	state.slice<3, 1>(4, 0) = _state.vel;
-	state.slice<3, 1>(7, 0) = _state.pos;
-	state.slice<3, 1>(10, 0) = _state.delta_ang_bias;
-	state.slice<3, 1>(13, 0) = _state.delta_vel_bias;
-	state.slice<3, 1>(16, 0) = _state.mag_I;
-	state.slice<3, 1>(19, 0) = _state.mag_B;
-	state.slice<2, 1>(22, 0) = _state.wind_vel;
+	state.slice<State::quat_nominal.dof, 1>(State::quat_nominal.idx, 0) = _state.quat_nominal;
+	state.slice<State::vel.dof, 1>(State::vel.idx, 0) = _state.vel;
+	state.slice<State::pos.dof, 1>(State::pos.idx, 0) = _state.pos;
+	state.slice<State::delta_ang_bias.dof, 1>(State::delta_ang_bias.idx, 0) = _state.delta_ang_bias;
+	state.slice<State::delta_vel_bias.dof, 1>(State::delta_vel_bias.idx, 0) = _state.delta_vel_bias;
+	state.slice<State::mag_I.dof, 1>(State::mag_I.idx, 0) = _state.mag_I;
+	state.slice<State::mag_B.dof, 1>(State::mag_B.idx, 0) = _state.mag_B;
+	state.slice<State::wind_vel.dof, 1>(State::wind_vel.idx, 0) = _state.wind_vel;
 	return state;
 }
 
@@ -466,7 +466,7 @@ void Ekf::get_ekf_gpos_accuracy(float *ekf_eph, float *ekf_epv) const
 	// report absolute accuracy taking into account the uncertainty in location of the origin
 	// If not aiding, return 0 for horizontal position estimate as no estimate is available
 	// TODO - allow for baro drift in vertical position error
-	float hpos_err = sqrtf(P(7, 7) + P(8, 8) + sq(_gps_origin_eph));
+	float hpos_err = sqrtf(P.trace<2>(State::pos.idx) + sq(_gps_origin_eph));
 
 	// If we are dead-reckoning, use the innovations as a conservative alternate measure of the horizontal position error
 	// The reason is that complete rejection of measurements is often caused by heading misalignment or inertial sensing errors
@@ -484,14 +484,14 @@ void Ekf::get_ekf_gpos_accuracy(float *ekf_eph, float *ekf_epv) const
 	}
 
 	*ekf_eph = hpos_err;
-	*ekf_epv = sqrtf(P(9, 9) + sq(_gps_origin_epv));
+	*ekf_epv = sqrtf(P(State::pos.idx + 2, State::pos.idx + 2) + sq(_gps_origin_epv));
 }
 
 // get the 1-sigma horizontal and vertical position uncertainty of the ekf local position
 void Ekf::get_ekf_lpos_accuracy(float *ekf_eph, float *ekf_epv) const
 {
 	// TODO - allow for baro drift in vertical position error
-	float hpos_err = sqrtf(P(7, 7) + P(8, 8));
+	float hpos_err = sqrtf(P.trace<2>(State::pos.idx));
 
 	// If we are dead-reckoning for too long, use the innovations as a conservative alternate measure of the horizontal position error
 	// The reason is that complete rejection of measurements is often caused by heading misalignment or inertial sensing errors
@@ -509,13 +509,13 @@ void Ekf::get_ekf_lpos_accuracy(float *ekf_eph, float *ekf_epv) const
 	}
 
 	*ekf_eph = hpos_err;
-	*ekf_epv = sqrtf(P(9, 9));
+	*ekf_epv = sqrtf(P(State::pos.idx + 2, State::pos.idx + 2));
 }
 
 // get the 1-sigma horizontal and vertical velocity uncertainty
 void Ekf::get_ekf_vel_accuracy(float *ekf_evh, float *ekf_evv) const
 {
-	float hvel_err = sqrtf(P(4, 4) + P(5, 5));
+	float hvel_err = sqrtf(P.trace<2>(State::vel.idx));
 
 	// If we are dead-reckoning for too long, use the innovations as a conservative alternate measure of the horizontal velocity error
 	// The reason is that complete rejection of measurements is often caused by heading misalignment or inertial sensing errors
@@ -548,7 +548,7 @@ void Ekf::get_ekf_vel_accuracy(float *ekf_evh, float *ekf_evv) const
 	}
 
 	*ekf_evh = hvel_err;
-	*ekf_evv = sqrtf(P(6, 6));
+	*ekf_evv = sqrtf(P(State::vel.idx + 2, State::vel.idx + 2));
 }
 
 /*
@@ -617,7 +617,7 @@ void Ekf::resetGyroBias()
 
 	// Zero the corresponding covariances and set
 	// variances to the values use for initial alignment
-	P.uncorrelateCovarianceSetVariance<3>(10, sq(_params.switch_on_gyro_bias * _dt_ekf_avg));
+	P.uncorrelateCovarianceSetVariance<State::delta_ang_bias.dof>(State::delta_ang_bias.idx, sq(_params.switch_on_gyro_bias * _dt_ekf_avg));
 }
 
 void Ekf::resetAccelBias()
@@ -627,10 +627,10 @@ void Ekf::resetAccelBias()
 
 	// Zero the corresponding covariances and set
 	// variances to the values use for initial alignment
-	P.uncorrelateCovarianceSetVariance<3>(13, sq(_params.switch_on_accel_bias * _dt_ekf_avg));
+	P.uncorrelateCovarianceSetVariance<State::delta_vel_bias.dof>(State::delta_vel_bias.idx, sq(_params.switch_on_accel_bias * _dt_ekf_avg));
 
 	// Set previous frame values
-	_prev_dvel_bias_var = P.slice<3, 3>(13, 13).diag();
+	_prev_dvel_bias_var = P.slice<State::delta_vel_bias.dof, State::delta_vel_bias.dof>(State::delta_vel_bias.idx, State::delta_vel_bias.idx).diag();
 }
 
 // get EKF innovation consistency check status information comprising of:
@@ -790,23 +790,22 @@ void Ekf::get_ekf_soln_status(uint16_t *status) const
 
 void Ekf::fuse(const Vector24f &K, float innovation)
 {
-	_state.quat_nominal -= K.slice<4, 1>(0, 0) * innovation;
+	_state.quat_nominal -= K.slice<State::quat_nominal.dof, 1>(State::quat_nominal.idx, 0) * innovation;
 	_state.quat_nominal.normalize();
 	_R_to_earth = Dcmf(_state.quat_nominal);
 
-	_state.vel -= K.slice<3, 1>(4, 0) * innovation;
-	_state.pos -= K.slice<3, 1>(7, 0) * innovation;
-	_state.delta_ang_bias -= K.slice<3, 1>(10, 0) * innovation;
-	_state.delta_vel_bias -= K.slice<3, 1>(13, 0) * innovation;
-	_state.mag_I -= K.slice<3, 1>(16, 0) * innovation;
-	_state.mag_B -= K.slice<3, 1>(19, 0) * innovation;
-	_state.wind_vel -= K.slice<2, 1>(22, 0) * innovation;
+	_state.vel -= K.slice<State::vel.dof, 1>(State::vel.idx, 0) * innovation;
+	_state.pos -= K.slice<State::pos.dof, 1>(State::pos.idx, 0) * innovation;
+	_state.delta_ang_bias -= K.slice<State::delta_ang_bias.dof, 1>(State::delta_ang_bias.idx, 0) * innovation;
+	_state.delta_vel_bias -= K.slice<State::delta_vel_bias.dof, 1>(State::delta_vel_bias.idx, 0) * innovation;
+	_state.mag_I -= K.slice<State::mag_I.dof, 1>(State::mag_I.idx, 0) * innovation;
+	_state.mag_B -= K.slice<State::mag_B.dof, 1>(State::mag_B.idx, 0) * innovation;
+	_state.wind_vel -= K.slice<State::wind_vel.dof, 1>(State::wind_vel.idx, 0) * innovation;
 }
 
 void Ekf::uncorrelateQuatFromOtherStates()
 {
-	P.slice<_k_num_states - 4, 4>(4, 0) = 0.f;
-	P.slice<4, _k_num_states - 4>(0, 4) = 0.f;
+	P.uncorrelateCovarianceBlock<State::quat_nominal.dof>(State::quat_nominal.idx);
 }
 
 void Ekf::updateDeadReckoningStatus()
@@ -1092,29 +1091,28 @@ void Ekf::increaseQuatYawErrVariance(float yaw_variance)
 void Ekf::saveMagCovData()
 {
 	// save variances for XYZ body axis field
-	_saved_mag_bf_variance(0) = P(19, 19);
-	_saved_mag_bf_variance(1) = P(20, 20);
-	_saved_mag_bf_variance(2) = P(21, 21);
+	_saved_mag_bf_variance = P.slice<State::mag_B.dof, State::mag_B.dof>(State::mag_B.idx, State::mag_B.idx).diag();
 
 	// save the NE axis covariance sub-matrix
-	_saved_mag_ef_ne_covmat = P.slice<2, 2>(16, 16);
+	_saved_mag_ef_ne_covmat = P.slice<2, 2>(State::mag_I.idx, State::mag_I.idx);
 
 	// save variance for the D earth axis
-	_saved_mag_ef_d_variance = P(18, 18);
+	_saved_mag_ef_d_variance = P(State::mag_I.idx + 2, State::mag_I.idx + 2);
 }
 
 void Ekf::loadMagCovData()
 {
 	// re-instate variances for the XYZ body axis field
-	P(19, 19) = _saved_mag_bf_variance(0);
-	P(20, 20) = _saved_mag_bf_variance(1);
-	P(21, 21) = _saved_mag_bf_variance(2);
+	for (unsigned i = 0; i < State::mag_B.dof; i++) {
+		const unsigned state_index = State::mag_B.idx + i;
+		P(state_index, state_index) = _saved_mag_bf_variance(i);
+	}
 
 	// re-instate the NE axis covariance sub-matrix
-	P.slice<2, 2>(16, 16) = _saved_mag_ef_ne_covmat;
+	P.slice<2, 2>(State::mag_I.idx, State::mag_I.idx) = _saved_mag_ef_ne_covmat;
 
 	// re-instate the D earth axis variance
-	P(18, 18) = _saved_mag_ef_d_variance;
+	P(State::mag_I.idx + 2, State::mag_I.idx + 2) = _saved_mag_ef_d_variance;
 }
 
 void Ekf::resetQuatStateYaw(float yaw, float yaw_variance)
@@ -1241,5 +1239,5 @@ void Ekf::resetWindToZero()
 	_state.wind_vel.setZero();
 
 	// start with a small initial uncertainty to improve the initial estimate
-	P.uncorrelateCovarianceSetVariance<2>(22, _params.initial_wind_uncertainty);
+	P.uncorrelateCovarianceSetVariance<State::wind_vel.dof>(State::wind_vel.idx, _params.initial_wind_uncertainty);
 }

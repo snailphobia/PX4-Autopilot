@@ -279,6 +279,18 @@ struct systemFlagUpdate {
 	bool gnd_effect{false};
 };
 
+struct State {
+	struct IdxDof { int8_t idx; size_t dof; };
+	static constexpr IdxDof quat_nominal{0, 4};
+	static constexpr IdxDof vel{4, 3};
+	static constexpr IdxDof pos{7, 3};
+	static constexpr IdxDof delta_ang_bias{10, 3};
+	static constexpr IdxDof delta_vel_bias{13, 3};
+	static constexpr IdxDof mag_I{16, 3};
+	static constexpr IdxDof mag_B{19, 3};
+	static constexpr IdxDof wind_vel{22, 2};
+};
+
 struct stateSample {
 	Quatf    quat_nominal{};        ///< quaternion defining the rotation from body to earth frame
 	Vector3f vel{};                 ///< NED velocity in earth frame in m/s
