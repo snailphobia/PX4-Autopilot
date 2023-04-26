@@ -54,6 +54,7 @@ ActuatorEffectivenessStandardVTOL::getEffectivenessMatrix(Configuration &configu
 	_rotors.enablePropellerTorqueNonUpwards(false);
 	const bool mc_rotors_added_successfully = _rotors.addActuators(configuration);
 	_mc_motors_mask = _rotors.getUpwardsMotors();
+	_fw_motors_mask = _rotors.getForwardsMotors();
 
 	// Control Surfaces
 	configuration.selected_matrix = 1;
@@ -83,6 +84,27 @@ void ActuatorEffectivenessStandardVTOL::allocateAuxilaryControls(const float dt,
 	}
 }
 
+void ActuatorEffectivenessStandardVTOL::updateSetpoint(const matrix::Vector<float, NUM_AXES> &control_sp,
+		int matrix_index, ActuatorVector &actuator_sp, const matrix::Vector<float, NUM_ACTUATORS> &actuator_min,
+		const matrix::Vector<float, NUM_ACTUATORS> &actuator_max)
+{
+	if (matrix_index == 0) {
+		// Stop front facing motors when they are commanded 0 thrust
+		for (int actuator_idx = 0; actuator_idx < NUM_ACTUATORS; actuator_idx++) {
+			const uint32_t motor_mask = (1u << actuator_idx);
+
+			if (_fw_motors_mask & motor_mask) {
+				if (actuator_sp(actuator_idx) < .01f) {
+					_stopped_motors |= motor_mask;
+
+				} else {
+					_stopped_motors &= ~motor_mask;
+				}
+			}
+		}
+	}
+}
+
 void ActuatorEffectivenessStandardVTOL::setFlightPhase(const FlightPhase &flight_phase)
 {
 	if (_flight_phase == flight_phase) {
@@ -94,13 +116,13 @@ void ActuatorEffectivenessStandardVTOL::setFlightPhase(const FlightPhase &flight
 	// update stopped motors
 	switch (flight_phase) {
 	case FlightPhase::FORWARD_FLIGHT:
-		_stopped_motors = _mc_motors_mask;
+		_stopped_motors |= _mc_motors_mask;
 		break;
 
 	case FlightPhase::HOVER_FLIGHT:
 	case FlightPhase::TRANSITION_FF_TO_HF:
 	case FlightPhase::TRANSITION_HF_TO_FF:
-		_stopped_motors = 0;
+		_stopped_motors &= ~_mc_motors_mask;
 		break;
 	}
 }
