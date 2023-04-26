@@ -53,12 +53,32 @@ ActuatorEffectivenessFixedWing::getEffectivenessMatrix(Configuration &configurat
 	// Motors
 	_rotors.enablePropellerTorque(false);
 	const bool rotors_added_successfully = _rotors.addActuators(configuration);
+	_fw_motors_mask = _rotors.getForwardsMotors();
 
 	// Control Surfaces
 	_first_control_surface_idx = configuration.num_actuators_matrix[0];
 	const bool surfaces_added_successfully = _control_surfaces.addActuators(configuration);
 
 	return (rotors_added_successfully && surfaces_added_successfully);
+}
+
+void ActuatorEffectivenessFixedWing::updateSetpoint(const matrix::Vector<float, NUM_AXES> &control_sp,
+		int matrix_index, ActuatorVector &actuator_sp, const matrix::Vector<float, NUM_ACTUATORS> &actuator_min,
+		const matrix::Vector<float, NUM_ACTUATORS> &actuator_max)
+{
+	// Stop front facing motors when they are commanded 0 thrust
+	for (int actuator_idx = 0; actuator_idx < NUM_ACTUATORS; actuator_idx++) {
+		const uint32_t motor_mask = (1u << actuator_idx);
+
+		if (_fw_motors_mask & motor_mask) {
+			if (actuator_sp(actuator_idx) < .01f) {
+				_stopped_motors |= motor_mask;
+
+			} else {
+				_stopped_motors &= ~motor_mask;
+			}
+		}
+	}
 }
 
 void ActuatorEffectivenessFixedWing::allocateAuxilaryControls(const float dt, int matrix_index,
