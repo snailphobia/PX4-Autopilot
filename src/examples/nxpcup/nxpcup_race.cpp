@@ -118,7 +118,7 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 		newVec2.m_x1 = vec2.m_x1 - vec2.m_x0;
 		newVec2.m_y1 = vec2.m_y1 - vec2.m_y0;
 		float f2 = newVec2.m_y1 / (sqrt(newVec2.m_y1 * newVec2.m_y1 + newVec2.m_x1 * newVec2.m_x1));
-		float angle = (acos(f) + acos(1 - f2))/2;
+		float angle = (acos(f) + acos(-f2))/2;
 		float medcos = cos(angle);
 		control.steer = medcos;
 		control.speed = SPEED_NORMAL;
