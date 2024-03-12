@@ -110,17 +110,18 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 		   find distance from center of frame */
 		// main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
 		// control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
-		Vector newVec1;
-		newVec1.m_x1 = vec1.m_x1 - vec1.m_x0;
-		newVec1.m_y1 = vec1.m_y1 - vec1.m_y0;
-		float f = newVec1.m_y1 / (sqrt(newVec1.m_y1 * newVec1.m_y1 + newVec1.m_x1 * newVec1.m_x1));
-		Vector newVec2;
-		newVec2.m_x1 = vec2.m_x1 - vec2.m_x0;
-		newVec2.m_y1 = vec2.m_y1 - vec2.m_y0;
-		float f2 = newVec2.m_y1 / (sqrt(newVec2.m_y1 * newVec2.m_y1 + newVec2.m_x1 * newVec2.m_x1));
-		float angle = (acos(f) + acos(-f2))/2;
+		int8_t vec1_right = vec1.m_x1 > (frameWidth / 2) ? -1 : 1;
+		int8_t vec2_right = vec2.m_x1 > (frameWidth / 2) ? -1 : 1;
+		int8_t resx = vec1.m_x1 - vec1.m_x0, res2x = vec2.m_x1 - vec2.m_x0;
+		int8_t resy = vec1.m_y1 - vec1.m_y0, res2y = vec2.m_y1 - vec2.m_y0;
+		float f = resy / (sqrt(resy * resy + resx * resx));
+		float f2 = res2y / (sqrt(res2y * res2y + res2x * res2x));
+		float angle = (acos(f * vec1_right) + acos(f2 * vec2_right))/2;
 		float medcos = cos(angle);
 		control.steer = medcos;
+
+
+		
 		control.speed = SPEED_NORMAL;
 		break;
 	}
