@@ -68,14 +68,15 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	return vec;
 }
 
-roverControl raceTrack(const pixy_vector_s &pixy)
+roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 {
-	Vector main_vec;
+	// Vector main_vec;
+
 	Vector vec1 = copy_vectors(pixy, 1);
 	Vector vec2 = copy_vectors(pixy, 2);
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
-	int16_t window_center = (frameWidth / 2);
+	// int16_t window_center = (frameWidth / 2);
 	roverControl control{};
 	float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
@@ -83,9 +84,11 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	static bool first_call = true;
 	uint8_t num_vectors = get_num_vectors(vec1, vec2);
 
+	// PX4_WARN("Pula\n");
+
 
 	switch (num_vectors) {
-	case 0:
+	case 0:{
 		if(first_call){
 			no_line_time = hrt_absolute_time();
 			first_call = false;
@@ -99,19 +102,29 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			}
 		}
 		break;
-
-	case 2:
+	}
+	case 2:{
 		first_call = true;
 
-		/* Very simple steering angle calculation, get average of the x of top two points and 
+		/* Very simple steering angle calculation, get average of the x of top two points and
 		   find distance from center of frame */
-		main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
-		control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
-
-		control.speed = SPEED_FAST;
+		// main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
+		// control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
+		Vector newVec1;
+		newVec1.m_x1 = vec1.m_x1 - vec1.m_x0;
+		newVec1.m_y1 = vec1.m_y1 - vec1.m_y0;
+		float f = newVec1.m_y1 / (sqrt(newVec1.m_y1 * newVec1.m_y1 + newVec1.m_x1 * newVec1.m_x1));
+		Vector newVec2;
+		newVec2.m_x1 = vec2.m_x1 - vec2.m_x0;
+		newVec2.m_y1 = vec2.m_y1 - vec2.m_y0;
+		float f2 = newVec2.m_y1 / (sqrt(newVec2.m_y1 * newVec2.m_y1 + newVec2.m_x1 * newVec2.m_x1));
+		float angle = (acos(f) + acos(1 - f2))/2;
+		float medcos = cos(angle);
+		control.steer = medcos;
+		control.speed = SPEED_NORMAL;
 		break;
-
-	default:
+	}
+	default: {
 		first_call = true;
 		/* Following the main vector */
 		if (vec1.m_x1 > vec1.m_x0) {
@@ -126,10 +139,15 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			control.speed = SPEED_NORMAL;
 		}else{
 			control.steer = 0.0;
-			control.speed = SPEED_SLOW;
+			control.speed = SPEED_NORMAL;
 		}
 		break;
 	}
+	}
+	control.steer = -control.steer;
+	roverControl rc;
+	rc.speed = control.speed;
+	rc.steer = control.steer;
 
-	return control;
+	return rc;
 }

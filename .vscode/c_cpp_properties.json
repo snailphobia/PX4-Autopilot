@@ -3,7 +3,8 @@
         {
             "name": "PX4",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/platforms/common"
             ],
             "defines": [],
             "forcedInclude": ["${workspaceFolder}/platforms/nuttx/src/canbootloader/include/visibility.h"],

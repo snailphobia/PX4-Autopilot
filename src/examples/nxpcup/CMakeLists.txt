@@ -34,7 +34,7 @@
 px4_add_module(
 	MODULE examples__nxpcup
 	MAIN nxpcup_work
-	COMPILE_FLAGS
+	COMPILE_FLAGS -O0
 	SRCS
 		nxpcup_work.cpp
 		nxpcup_work.hpp

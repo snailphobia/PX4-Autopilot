@@ -161,7 +161,7 @@ int NxpCupWork::custom_command(int argc, char *argv[])
 int NxpCupWork::print_usage(const char *reason)
 {
 	if (reason) {
-		PX4_WARN("%s\n", reason);
+		PX4_WARN("Imi bag pula in mata %s\n", reason);
 	}
 
 	PRINT_MODULE_DESCRIPTION(

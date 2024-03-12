@@ -40,8 +40,13 @@
 #ifndef NXPCUP_RACE_
 #define NXPCUP_RACE_
 
+// #define __NUTTX
+// #ifndef __PX4_NUTTX
+// #define __PX4_NUTTX
+// #endif
 #include <px4_defines.h>
 #include <uORB/topics/pixy_vector.h>
+#include <uORB/topics/mavlink_log.h>
 
 #define SPEED_FAST	0.15f
 #define SPEED_NORMAL	0.1f
