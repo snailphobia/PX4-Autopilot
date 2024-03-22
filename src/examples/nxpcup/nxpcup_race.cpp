@@ -83,9 +83,11 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
 	uint8_t num_vectors = get_num_vectors(vec1, vec2);
-
+	time_diff = hrt_elapsed_time_atomic(&no_line_time);
+	static float last_steer = 0.0f;
+	static float last_speed = 0.0f;
 	// PX4_WARN("Pula\n");
-
+	int spion = 0;
 
 	switch (num_vectors) {
 	case 0:{
@@ -94,7 +96,12 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 			first_call = false;
 		}else{
 			time_diff = hrt_elapsed_time_atomic(&no_line_time);
-			control.steer = 0.0f;
+			if(!spion) {
+				control.steer = 2*last_steer;
+				control.speed = 0.5f*last_speed;
+				spion = 1;
+			}
+
 			if(time_diff > 10000){
 				/* Stopping if no vector is available */
 				control.steer = 0.0f;
@@ -105,6 +112,7 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	}
 	case 2:{
 		first_call = true;
+		spion = 0;
 
 		/* Very simple steering angle calculation, get average of the x of top two points and
 		   find distance from center of frame */
@@ -121,12 +129,14 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 		control.steer = medcos;
 
 
-		
+
 		control.speed = SPEED_NORMAL;
+
 		break;
 	}
 	default: {
 		first_call = true;
+		spion = 0;
 		/* Following the main vector */
 		if (vec1.m_x1 > vec1.m_x0) {
 			x = (float)(vec1.m_x1 - vec1.m_x0) / (float)frameWidth;
@@ -146,6 +156,8 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	}
 	}
 	control.steer = -control.steer;
+	last_steer = control.steer;
+	last_speed = control.speed;
 	roverControl rc;
 	rc.speed = control.speed;
 	rc.steer = control.steer;

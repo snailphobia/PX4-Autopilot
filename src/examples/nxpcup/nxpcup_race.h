@@ -48,9 +48,9 @@
 #include <uORB/topics/pixy_vector.h>
 #include <uORB/topics/mavlink_log.h>
 
-#define SPEED_FAST	0.15f
-#define SPEED_NORMAL	0.1f
-#define SPEED_SLOW	0.05f
+#define SPEED_FAST	0.20f
+#define SPEED_NORMAL	0.15f
+#define SPEED_SLOW	0.10f
 #define SPEED_STOP	0.0f
 
 struct roverControl {
