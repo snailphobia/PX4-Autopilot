@@ -53,6 +53,16 @@
 #define SPEED_SLOW	0.10f
 #define SPEED_STOP	0.0f
 
+#define POOL_SIZE	10
+
+typedef struct {
+	uint8_t crt_num;
+	Vector pool[POOL_SIZE];
+} vhs;
+
+void push_vhs(vhs &v, Vector vec);
+void pop_vhs(vhs &v);
+
 struct roverControl {
 	float steer;
 	float speed;

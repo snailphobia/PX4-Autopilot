@@ -68,12 +68,44 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	return vec;
 }
 
+void push_vhs(vhs &v, Vector vec) {
+	if (v.crt_num < POOL_SIZE) {
+		v.pool[v.crt_num] = vec;
+		v.crt_num++;
+	} else {
+		for (int i = 0; i < POOL_SIZE - 1; i++) {
+			v.pool[i] = v.pool[i + 1];
+		}
+		v.pool[POOL_SIZE - 1] = vec;
+	}
+}
+
+void pop_vhs(vhs &v) {
+	if (v.crt_num > 0) {
+		v.pool[v.crt_num] = {};
+		v.crt_num--;
+	}
+}
+
+vhs vec_history = {};
+
 roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 {
 	// Vector main_vec;
 
 	Vector vec1 = copy_vectors(pixy, 1);
 	Vector vec2 = copy_vectors(pixy, 2);
+
+	// if vec1: a->b and vec2: b->c, keep only one from a->c as one vector
+	if(abs(vec1.m_x0 - vec2.m_x1) <= 33 && abs(vec1.m_y0 - vec2.m_y1) <= 3) {
+		vec1.m_x1 = vec2.m_x1;
+		vec1.m_y1 = vec2.m_y1;
+		vec2.m_x0 = 0;
+		vec2.m_x1 = 0;
+		vec2.m_y0 = 0;
+		vec2.m_y1 = 0;
+	}
+
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
 	// int16_t window_center = (frameWidth / 2);
@@ -88,9 +120,11 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	static float last_speed = 0.0f;
 	// PX4_WARN("Pula\n");
 	int spion = 0;
-
+	// dummy vector: straight upward vector
+	Vector dummy = {.m_x0 = 0, .m_y0 = 0, .m_x1 = 0, .m_y1 = 0};
 	switch (num_vectors) {
 	case 0:{
+		push_vhs(vec_history, dummy);
 		if(first_call){
 			no_line_time = hrt_absolute_time();
 			first_call = false;
@@ -113,7 +147,6 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	case 2:{
 		first_call = true;
 		spion = 0;
-
 		/* Very simple steering angle calculation, get average of the x of top two points and
 		   find distance from center of frame */
 		// main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
@@ -127,10 +160,10 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 		float angle = (acos(f * vec1_right) + acos(f2 * vec2_right))/2;
 		float medcos = cos(angle);
 		control.steer = medcos;
-
-
-
 		control.speed = SPEED_NORMAL;
+
+		push_vhs(vec_history, vec1);
+		push_vhs(vec_history, vec2);
 
 		break;
 	}
@@ -152,10 +185,32 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 			control.steer = 0.0;
 			control.speed = SPEED_NORMAL;
 		}
+		push_vhs(vec_history, vec1);
+
 		break;
 	}
 	}
+
+	// compute the average of the last 10 vectors
+	// pixy_vector_s vec = {};
+	// for (auto vector : vec_history) {
+	// 	vec += vector;
+	// }
+	// vec /= vec_history.size();
+	float composite_ = 0.f;
+	for (int i = 0; i < vec_history.crt_num; i++) {
+		if (vec_history.pool[i].m_x0 != 0 || vec_history.pool[i].m_y0 != 0) {
+			vec_history.pool[i].m_y1 -= vec_history.pool[i].m_y0;
+			vec_history.pool[i].m_x1 -= vec_history.pool[i].m_x0;
+		}
+		if (vec_history.pool[i].m_x1 != 0)
+			composite_ += atan2(vec_history.pool[i].m_y1, vec_history.pool[i].m_x1);
+	}
+	composite_ /= vec_history.crt_num;
+
 	control.steer = -control.steer;
+
+	control.steer = composite_;
 	last_steer = control.steer;
 	last_speed = control.speed;
 	roverControl rc;
