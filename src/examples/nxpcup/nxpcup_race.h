@@ -55,13 +55,6 @@
 
 #define POOL_SIZE	10
 
-typedef struct {
-	uint8_t crt_num;
-	Vector pool[POOL_SIZE];
-} vhs;
-
-void push_vhs(vhs &v, Vector vec);
-void pop_vhs(vhs &v);
 
 struct roverControl {
 	float steer;
@@ -94,5 +87,13 @@ struct Vector
 roverControl raceTrack(const pixy_vector_s &pixy);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
 Vector copy_vectors(pixy_vector_s &pixy, uint8_t num);
+
+typedef struct {
+	uint8_t crt_num;
+	struct Vector pool[POOL_SIZE];
+} vhs;
+
+void push_vhs(vhs &v, Vector vec);
+void pop_vhs(vhs &v);
 
 #endif

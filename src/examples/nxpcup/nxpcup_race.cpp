@@ -121,7 +121,7 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	// PX4_WARN("Pula\n");
 	int spion = 0;
 	// dummy vector: straight upward vector
-	Vector dummy = {.m_x0 = 0, .m_y0 = 0, .m_x1 = 0, .m_y1 = 0};
+	struct Vector dummy = {.m_x0 = 0, .m_y0 = 0, .m_x1 = 0, .m_y1 = 0};
 	switch (num_vectors) {
 	case 0:{
 		push_vhs(vec_history, dummy);
@@ -204,7 +204,7 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 			vec_history.pool[i].m_x1 -= vec_history.pool[i].m_x0;
 		}
 		if (vec_history.pool[i].m_x1 != 0)
-			composite_ += atan2(vec_history.pool[i].m_y1, vec_history.pool[i].m_x1);
+			composite_ += (float)atan2(vec_history.pool[i].m_y1, vec_history.pool[i].m_x1);
 	}
 	composite_ /= vec_history.crt_num;
 
