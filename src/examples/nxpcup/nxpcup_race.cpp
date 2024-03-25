@@ -68,7 +68,7 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	return vec;
 }
 
-roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
+roverControl raceTrack(const pixy_vector_s &pixy)
 {
 	// Vector main_vec;
 
@@ -78,13 +78,17 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 	uint8_t frameHeight = 52;
 	// int16_t window_center = (frameWidth / 2);
 	roverControl control{};
-	float x, y;					 // calc gradient and position of main vector
+	// float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
+	static double steers[STEER_BUFSIZE] = {0};
+	static uint8_t steer_index = 0;
+
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
 	uint8_t num_vectors = get_num_vectors(vec1, vec2);
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
+	static float last_big_stear_spion = 0.0f;
 	static float last_speed = 0.0f;
 	// PX4_WARN("Pula\n");
 	int spion = 0;
@@ -118,45 +122,55 @@ roverControl __attribute__((optimize(0))) raceTrack(const pixy_vector_s &pixy)
 		   find distance from center of frame */
 		// main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
 		// control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
-		int8_t vec1_right = vec1.m_x1 > (frameWidth / 2) ? -1 : 1;
-		int8_t vec2_right = vec2.m_x1 > (frameWidth / 2) ? -1 : 1;
 		int8_t resx = vec1.m_x1 - vec1.m_x0, res2x = vec2.m_x1 - vec2.m_x0;
 		int8_t resy = vec1.m_y1 - vec1.m_y0, res2y = vec2.m_y1 - vec2.m_y0;
-		float f = resy / (sqrt(resy * resy + resx * resx));
-		float f2 = res2y / (sqrt(res2y * res2y + res2x * res2x));
-		float angle = (acos(f * vec1_right) + acos(f2 * vec2_right))/2;
-		float medcos = cos(angle);
-		control.steer = medcos;
+		VectorF vec1norn = {resx,resy};
+		VectorF vec2norn = {res2x,res2y};
+		VectorF avg = {(vec1norn.m_x0 + vec2norn.m_x0)/2,-((double)vec1norn.m_y0 + vec2norn.m_y0)/2.0};
+		VectorF avgnorm = {avg.m_x0/(sqrt(avg.m_x0*avg.m_x0 + avg.m_y0*avg.m_y0)),avg.m_y0/(sqrt(avg.m_x0*avg.m_x0 + avg.m_y0*avg.m_y0))};
+
+		// angle between avg and oy
+
+		steers[steer_index] = avgnorm.m_x0;
+		// float f = resx / (sqrt(resy * resy + resx * resx));
+		// float f2 = res2x / (sqrt(res2y * res2y + res2x * res2x));
+		// float angle = (acos(f) + acos(f2))/2 - M_PI;
+		// float medcos = cos(angle);
+		// control.steer = medcos;
 
 
 
 		control.speed = SPEED_NORMAL;
 
-		break;
+ 		break;
 	}
 	default: {
 		first_call = true;
 		spion = 0;
+		//check if vec1 is the middle of the screen
 		/* Following the main vector */
-		if (vec1.m_x1 > vec1.m_x0) {
-			x = (float)(vec1.m_x1 - vec1.m_x0) / (float)frameWidth;
-			y = (float)(vec1.m_y1 - vec1.m_y0) / (float)frameHeight;
-		} else {
-			x = (float)(vec1.m_x0 - vec1.m_x1) / (float)frameWidth;
-			y = (float)(vec1.m_y0 - vec1.m_y1) / (float)frameHeight;
-		}
-		if(vec1.m_x0 != vec1.m_x1){
-			control.steer = (-1) * x / y; // Gradient of the main vector
+		// int8_t vec1_right = vec1.m_x1 > (frameWidth / 2) ? -1 : 1;
+		int8_t resx = vec1.m_x1 - vec1.m_x0;
+		int8_t resy = vec1.m_y1 - vec1.m_y0;
+		VectorF vec1norm = {resx/(sqrt(resy * resy + resx * resx)),resy/(sqrt(resy * resy + resx * resx))};
+		if(abs(vec1.m_x0 - vec1.m_x1) < 5 && abs(vec1.m_x0 - frameWidth / 2) < 5 && abs(vec1.m_x1 - frameWidth / 2) < 5){
+			steers[steer_index] = -last_big_stear_spion;
 			control.speed = SPEED_NORMAL;
-		}else{
-			control.steer = 0.0;
-			control.speed = SPEED_NORMAL;
+			goto end;
 		}
+		steers[steer_index] = vec1norm.m_x0;
+
+end:
+		control.speed = SPEED_NORMAL;
 		break;
 	}
 	}
-	control.steer = -control.steer;
+	steer_index = (steer_index + 1) % STEER_BUFSIZE;
+	control.steer = -steers[steer_index];
 	last_steer = control.steer;
+	if (abs(control.steer) > 0.5f) {
+		last_big_stear_spion = control.steer;
+	}
 	last_speed = control.speed;
 	roverControl rc;
 	rc.speed = control.speed;

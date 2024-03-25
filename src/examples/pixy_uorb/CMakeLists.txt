@@ -34,7 +34,7 @@
 px4_add_module(
 	MODULE examples__pixy_uorb
 	MAIN pixy_uorb
-	COMPILE_FLAGS -Wno-error=cast-align -Wno-error=implicit-fallthrough
+	COMPILE_FLAGS -Wno-error=cast-align -Wno-error=implicit-fallthrough -O0
 	SRCS
 		pixy_uorb_main.cpp
 	DEPENDS

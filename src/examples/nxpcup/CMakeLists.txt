@@ -34,7 +34,7 @@
 px4_add_module(
 	MODULE examples__nxpcup
 	MAIN nxpcup_work
-	COMPILE_FLAGS -O0
+	COMPILE_FLAGS -O0 -Wno-error -Wno-unused-variable
 	SRCS
 		nxpcup_work.cpp
 		nxpcup_work.hpp

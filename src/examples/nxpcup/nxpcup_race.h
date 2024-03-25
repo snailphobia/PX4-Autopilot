@@ -53,6 +53,8 @@
 #define SPEED_SLOW	0.10f
 #define SPEED_STOP	0.0f
 
+#define STEER_BUFSIZE	10
+
 struct roverControl {
 	float steer;
 	float speed;
@@ -80,6 +82,12 @@ struct Vector
 	uint8_t m_x1;
 	uint8_t m_y1;
 };
+
+struct VectorF {
+	double m_x0;
+	double m_y0;
+};
+
 
 roverControl raceTrack(const pixy_vector_s &pixy);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
