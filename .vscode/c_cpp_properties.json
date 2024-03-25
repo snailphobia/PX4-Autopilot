@@ -7,7 +7,7 @@
                 "${workspaceFolder}/platforms/common"
             ],
             "defines": [],
-            "forcedInclude": ["${workspaceFolder}/platforms/nuttx/src/canbootloader/include/visibility.h"],
+            "forcedInclude": [],
             "macFrameworkPath": [],
             "configurationProvider": "ms-vscode.cmake-tools",
             "cppStandard": "gnu++11",

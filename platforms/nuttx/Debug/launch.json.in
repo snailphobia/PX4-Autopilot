@@ -19,6 +19,11 @@
                 "source ${workspaceFolder}/platforms/nuttx/Debug/ARMv7M",
                 "set mem inaccessible-by-default off",
                 "set print pretty",
+            ],
+            "postStartSessionCommands": [
+                "shell ./pula.sh&",
+                "set logging on",
+                "continue"
             ]
         },
         {
