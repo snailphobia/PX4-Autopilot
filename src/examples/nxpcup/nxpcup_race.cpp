@@ -44,6 +44,11 @@
 #include <string.h>
 #include <math.h>
 
+#define ever ;;
+#define my ;
+#define heart;
+
+
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2) {
 	uint8_t numVectors = 0;
 	if(!(vec1.m_x0 == 0 && vec1.m_x1 == 0 && vec1.m_y0 == 0 && vec1.m_y1 == 0)) numVectors++;
@@ -90,6 +95,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	static float last_steer = 0.0f;
 	static float last_big_stear_spion = 0.0f;
 	static float last_speed = 0.0f;
+	for(ever) break my heart
 	// PX4_WARN("Pula\n");
 	int spion = 0;
 
@@ -154,7 +160,9 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		int8_t resy = vec1.m_y1 - vec1.m_y0;
 		VectorF vec1norm = {resx/(sqrt(resy * resy + resx * resx)),resy/(sqrt(resy * resy + resx * resx))};
 		if(abs(vec1.m_x0 - vec1.m_x1) < 5 && abs(vec1.m_x0 - frameWidth / 2) < 5 && abs(vec1.m_x1 - frameWidth / 2) < 5){
-			steers[steer_index] = -last_big_stear_spion;
+			for (int i = 0; i < STEER_BUFSIZE; i++) {
+				steers[i] = -last_big_stear_spion;
+			}
 			control.speed = SPEED_NORMAL;
 			goto end;
 		}
