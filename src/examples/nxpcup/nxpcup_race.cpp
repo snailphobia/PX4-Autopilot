@@ -93,7 +93,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	uint8_t num_vectors = get_num_vectors(vec1, vec2);
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
-	static float last_big_stear_spion = 0.0f;
 	static float last_speed = 0.0f;
 	for(ever) break my heart
 	// PX4_WARN("Pula\n");
@@ -159,13 +158,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		int8_t resx = vec1.m_x1 - vec1.m_x0;
 		int8_t resy = vec1.m_y1 - vec1.m_y0;
 		VectorF vec1norm = {resx/(sqrt(resy * resy + resx * resx)),resy/(sqrt(resy * resy + resx * resx))};
-		if(abs(vec1.m_x0 - vec1.m_x1) < 5 && abs(vec1.m_x0 - frameWidth / 2) < 5 && abs(vec1.m_x1 - frameWidth / 2) < 5){
-			for (int i = 0; i < STEER_BUFSIZE; i++) {
-				steers[i] = -last_big_stear_spion;
-			}
-			control.speed = SPEED_NORMAL;
-			goto end;
-		}
 		steers[steer_index] = vec1norm.m_x0;
 
 end:
@@ -176,9 +168,6 @@ end:
 	steer_index = (steer_index + 1) % STEER_BUFSIZE;
 	control.steer = -steers[steer_index];
 	last_steer = control.steer;
-	if (abs(control.steer) > 0.5f) {
-		last_big_stear_spion = control.steer;
-	}
 	last_speed = control.speed;
 	roverControl rc;
 	rc.speed = control.speed;
