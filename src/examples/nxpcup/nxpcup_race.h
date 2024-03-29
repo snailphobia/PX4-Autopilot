@@ -53,7 +53,7 @@
 #define SPEED_SLOW	0.10f
 #define SPEED_STOP	0.0f
 
-#define STEER_BUFSIZE	10
+#define STEER_BUFSIZE	3
 
 struct roverControl {
 	float steer;
