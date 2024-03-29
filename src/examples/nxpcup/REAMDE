@@ -1,0 +1,11 @@
+todos
+
+1. verifica daca exista 0/1 vectori sau macar 2
+2. folosind pozitia hardcodata a camerei proiecteaza vectorii
+3. daca exista macar 2, calculeaza compunerea lor si du-te astfel incat vectorul din partea opusa directiei de mers sa fie cat mai aproape de centrul imaginii, dar totodata centrul imaginii sa fie intre cei 2 vectori | foloseste un treshold pentru a decide daca un vector este de viraj/drept
+4. daca vectorul este inclinat peste treshold, inseamna ca am intrat in curba si trebuie sa incepem virajul; folosim formula liniara in functie de unghiul vectorului
+5. daca vectorul este sub treshold, mai alegem un al doilea treshold pentru a decide daca corectam directia ca si corneliu sa ajunga pe centrul circuitului, altfel daca este intre cele doua valori il tinem lipit de margine
+6. daca nu exista 2 vectori, avem 2 posibilitati: suntem in intersectie sau in curba si marginea a doua nu mai e vizibila
+6a. daca suntem in curba trebuie sa viram dupa cum arata vectorul
+6b. daca suntem in intersectie ar trebui teoretic sa mergem drept; dumnezeu cu mila
+
