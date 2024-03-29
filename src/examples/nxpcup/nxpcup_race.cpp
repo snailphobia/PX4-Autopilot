@@ -49,10 +49,13 @@
 #define heart;
 
 
-uint8_t get_num_vectors(Vector &vec1, Vector &vec2) {
+uint8_t get_num_vectors(Vector *vecs) {
 	uint8_t numVectors = 0;
-	if(!(vec1.m_x0 == 0 && vec1.m_x1 == 0 && vec1.m_y0 == 0 && vec1.m_y1 == 0)) numVectors++;
-	if(!(vec2.m_x0 == 0 && vec2.m_x1 == 0 && vec2.m_y0 == 0 && vec2.m_y1 == 0)) numVectors++;
+	for (int i = 0; i < 6; i++) {
+		if (vecs[i].m_x0 != 0 && vecs[i].m_x1 != 0 && vecs[i].m_y0 != 0 && vecs[i].m_y1 != 0) {
+			numVectors++;
+		}
+	}
 	return numVectors;
 }
 
@@ -70,15 +73,41 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 		vec.m_y0 = pixy.m1_y0;
 		vec.m_y1 = pixy.m1_y1;
 	}
+	if(num == 3) {
+		vec.m_x0 = pixy.m2_x0;
+		vec.m_x1 = pixy.m2_x1;
+		vec.m_y0 = pixy.m2_y0;
+		vec.m_y1 = pixy.m2_y1;
+	}
+	if(num == 4) {
+		vec.m_x0 = pixy.m3_x0;
+		vec.m_x1 = pixy.m3_x1;
+		vec.m_y0 = pixy.m3_y0;
+		vec.m_y1 = pixy.m3_y1;
+	}
+	if(num == 5) {
+		vec.m_x0 = pixy.m4_x0;
+		vec.m_x1 = pixy.m4_x1;
+		vec.m_y0 = pixy.m4_y0;
+		vec.m_y1 = pixy.m4_y1;
+	}
+	if(num == 6) {
+		vec.m_x0 = pixy.m5_x0;
+		vec.m_x1 = pixy.m5_x1;
+		vec.m_y0 = pixy.m5_y0;
+		vec.m_y1 = pixy.m5_y1;
+	}
 	return vec;
 }
 
 roverControl raceTrack(const pixy_vector_s &pixy)
 {
 	// Vector main_vec;
+	Vector vecs[6];
+	for (int i = 0; i < 6; i++) {
+		vecs[i] = copy_vectors(pixy, i);
+	}
 
-	Vector vec1 = copy_vectors(pixy, 1);
-	Vector vec2 = copy_vectors(pixy, 2);
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
 	// int16_t window_center = (frameWidth / 2);
@@ -90,7 +119,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
-	uint8_t num_vectors = get_num_vectors(vec1, vec2);
+	uint8_t num_vectors = get_num_vectors(vecs);
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
 	static float last_speed = 0.0f;
@@ -125,10 +154,10 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 
 		/* Very simple steering angle calculation, get average of the x of top two points and
 		   find distance from center of frame */
-		// main_vec.m_x1 = (vec1.m_x1 + vec2.m_x1) / 2;
+		// main_vec.m_x1 = (vecs[0].m_x1 + vecs[1].m_x1) / 2;
 		// control.steer = (float)(main_vec.m_x1 - window_center) / (float)frameWidth;
-		int8_t resx = vec1.m_x1 - vec1.m_x0, res2x = vec2.m_x1 - vec2.m_x0;
-		int8_t resy = vec1.m_y1 - vec1.m_y0, res2y = vec2.m_y1 - vec2.m_y0;
+		int8_t resx = vecs[0].m_x1 - vecs[0].m_x0, res2x = vecs[1].m_x1 - vecs[1].m_x0;
+		int8_t resy = vecs[0].m_y1 - vecs[0].m_y0, res2y = vecs[1].m_y1 - vecs[1].m_y0;
 		VectorF vec1norn = {resx,resy};
 		VectorF vec2norn = {res2x,res2y};
 		VectorF avg = {(vec1norn.m_x0 + vec2norn.m_x0)/2,-((double)vec1norn.m_y0 + vec2norn.m_y0)/2.0};
@@ -152,13 +181,13 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	default: {
 		first_call = true;
 		spion = 0;
-		//check if vec1 is the middle of the screen
+		//check if vecs[0] is the middle of the screen
 		/* Following the main vector */
-		// int8_t vec1_right = vec1.m_x1 > (frameWidth / 2) ? -1 : 1;
-		int8_t resx = vec1.m_x1 - vec1.m_x0;
-		int8_t resy = vec1.m_y1 - vec1.m_y0;
-		VectorF vec1norm = {resx/(sqrt(resy * resy + resx * resx)),resy/(sqrt(resy * resy + resx * resx))};
-		steers[steer_index] = vec1norm.m_x0;
+		// int8_t vecs[0]_right = vecs[0].m_x1 > (frameWidth / 2) ? -1 : 1;
+		int8_t resx = vecs[0].m_x1 - vecs[0].m_x0;
+		int8_t resy = vecs[0].m_y1 - vecs[0].m_y0;
+		VectorF vecnorm = {resx/(sqrt(resy * resy + resx * resx)),resy/(sqrt(resy * resy + resx * resx))};
+		steers[steer_index] = vecnorm.m_x0;
 
 end:
 		control.speed = SPEED_NORMAL;

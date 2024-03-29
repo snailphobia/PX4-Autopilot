@@ -67,11 +67,35 @@ int pixy_uorb_thread_main(int argc, char **argv)
 		pixy.getVersion();
 		pixy.version->print();
 		usleep(1000);
-
+		_pixy_vector.m0_x0 = 0;
+		_pixy_vector.m0_x1 = 0;
+		_pixy_vector.m0_y0 = 0;
+		_pixy_vector.m0_y1 = 0;
+		_pixy_vector.m1_x0 = 0;
+		_pixy_vector.m1_x1 = 0;
+		_pixy_vector.m1_y0 = 0;
+		_pixy_vector.m1_y1 = 0;
+		_pixy_vector.m2_x0 = 0;
+		_pixy_vector.m2_x1 = 0;
+		_pixy_vector.m2_y0 = 0;
+		_pixy_vector.m2_y1 = 0;
+		_pixy_vector.m3_x0 = 0;
+		_pixy_vector.m3_x1 = 0;
+		_pixy_vector.m3_y0 = 0;
+		_pixy_vector.m3_y1 = 0;
+		_pixy_vector.m4_x0 = 0;
+		_pixy_vector.m4_x1 = 0;
+		_pixy_vector.m4_y0 = 0;
+		_pixy_vector.m4_y1 = 0;
+		_pixy_vector.m5_x0 = 0;
+		_pixy_vector.m5_x1 = 0;
+		_pixy_vector.m5_y0 = 0;
+		_pixy_vector.m5_y1 = 0;
 		// Loop indefinitely and publish vector data
 		while (1) {
 			pixy.line.getAllFeatures(LINE_VECTOR, wait);		// get line vectors from pixy
-            		if(pixy.line.numVectors) {
+            		if(pixy.line.numVectors) {  // Sa moara janina in puscarie efectiv cine a fost retardatu care a
+						    // gandit ca definirea vectorului in un fisier .msg e o idee buna
 				_pixy_vector.m0_x0 = pixy.line.vectors[0].m_x0;
 				_pixy_vector.m0_x1 = pixy.line.vectors[0].m_x1;
 				_pixy_vector.m0_y0 = pixy.line.vectors[0].m_y0;
@@ -81,11 +105,32 @@ int pixy_uorb_thread_main(int argc, char **argv)
 					_pixy_vector.m1_x1 = pixy.line.vectors[1].m_x1;
 					_pixy_vector.m1_y0 = pixy.line.vectors[1].m_y0;
 					_pixy_vector.m1_y1 = pixy.line.vectors[1].m_y1;
-				} else {
-					_pixy_vector.m1_x0 = 0;
-					_pixy_vector.m1_x1 = 0;
-					_pixy_vector.m1_y0 = 0;
-					_pixy_vector.m1_y1 = 0;
+					if (pixy.line.numVectors > 2) {
+						_pixy_vector.m2_x0 = pixy.line.vectors[2].m_x0;
+						_pixy_vector.m2_x1 = pixy.line.vectors[2].m_x1;
+						_pixy_vector.m2_y0 = pixy.line.vectors[2].m_y0;
+						_pixy_vector.m2_y1 = pixy.line.vectors[2].m_y1;
+						if (pixy.line.numVectors > 3) {
+							_pixy_vector.m3_x0 = pixy.line.vectors[3].m_x0;
+							_pixy_vector.m3_x1 = pixy.line.vectors[3].m_x1;
+							_pixy_vector.m3_y0 = pixy.line.vectors[3].m_y0;
+							_pixy_vector.m3_y1 = pixy.line.vectors[3].m_y1;
+							if (pixy.line.numVectors > 4) {
+								_pixy_vector.m4_x0 = pixy.line.vectors[4].m_x0;
+								_pixy_vector.m4_x1 = pixy.line.vectors[4].m_x1;
+								_pixy_vector.m4_y0 = pixy.line.vectors[4].m_y0;
+								_pixy_vector.m4_y1 = pixy.line.vectors[4].m_y1;
+								if (pixy.line.numVectors > 5) {
+									_pixy_vector.m5_x0 = pixy.line.vectors[5].m_x0;
+									_pixy_vector.m5_x1 = pixy.line.vectors[5].m_x1;
+									_pixy_vector.m5_y0 = pixy.line.vectors[5].m_y0;
+									_pixy_vector.m5_y1 = pixy.line.vectors[5].m_y1;
+								}
+							}
+						}
+
+					}
+
 				}
 				_pixy_vector.timestamp = hrt_absolute_time();
 				_pixy_vector_pub.publish(_pixy_vector);
