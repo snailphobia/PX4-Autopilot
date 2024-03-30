@@ -48,11 +48,21 @@
 #include <uORB/topics/pixy_vector.h>
 #include <uORB/topics/mavlink_log.h>
 
-#define SPEED_FAST	0.20f
-#define SPEED_NORMAL	0.15f
-#define SPEED_SLOW	0.10f
+#define SPEED_FAST	0.225f
+#define SPEED_NORMAL	0.20f
+#define SPEED_SLOW	0.15f
 #define SPEED_STOP	0.0f
 
+#define FULL_LEFT 	-1.0f
+#define FULL_RIGHT 	1.0f
+#define STRAIGHT_	0.0f
+#define HALF_LEFT	-0.5f
+#define HALF_RIGHT	0.5f
+
+#define CAR_HALF_WIDTH 	15 	// pixels
+#define SCALING_FACTOR 	20.f	// for the steering angle
+#define TOLERANCE 	4 	// 4 pixels
+#define BOT		30	// pixels
 #define STEER_BUFSIZE	3
 
 struct roverControl {
