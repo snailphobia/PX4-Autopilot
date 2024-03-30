@@ -204,7 +204,7 @@ else
 	param compare CBRK_BUZZER 782090
 	if [ $? != 0 -o $STARTUP_TUNE != 1 ]
 	then
-		tune_control play -t $STARTUP_TUNE
+		# tune_control play -t $STARTUP_TUNE
 	fi
 
 	#
@@ -601,3 +601,10 @@ unset VEHICLE_TYPE
 # Boot is complete, inform MAVLink app(s) that the system is now fully up and running.
 #
 mavlink boot_complete
+
+# Autostart the nxpcup mission
+pixy_uorb start
+# nxpcup_work start
+
+# Activate nxpcup_work on ALTCTL mode, othervise stop it
+work_item_example start

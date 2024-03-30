@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 #include "WorkItemExample.hpp"
-
+#include <examples/nxpcup/nxpcup_work.hpp>
 #include <drivers/drv_hrt.h>
 
 using namespace time_literals;
@@ -58,6 +58,7 @@ bool WorkItemExample::init()
 
 void WorkItemExample::Run()
 {
+	static int running = false;
 	if (should_exit()) {
 		ScheduleClear();
 		exit_and_cleanup();
@@ -67,25 +68,15 @@ void WorkItemExample::Run()
 	perf_begin(_loop_perf);
 	perf_count(_loop_interval_perf);
 
-
-	// DO WORK
-
-
-
-	// Example
-	// grab latest accelerometer data
-	_sensor_accel_sub.update();
-	const sensor_accel_s &accel = _sensor_accel_sub.get();
-
-
-	// Example
-	// publish some data
-	orb_test_s data{};
-	data.timestamp = hrt_absolute_time();
-	data.val = accel.device_id;
-	_orb_test_pub.publish(data);
-
-
+	if(_vehicle_status_sub.get().nav_state == vehicle_status_s::NAVIGATION_STATE_ALTCTL && running == false) {
+		char *argv[] = {"nxpcup_work", "start"};
+		NxpCupWork::main(2, argv);
+		running = true;
+	} else if(_vehicle_status_sub.get().nav_state != vehicle_status_s::NAVIGATION_STATE_ALTCTL && running == true) {
+		char *argv[] = {"nxpcup_work", "stop"};
+		NxpCupWork::main(2, argv);
+		running = false;
+	}
 
 
 	perf_end(_loop_perf);

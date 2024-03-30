@@ -34,7 +34,7 @@
 px4_add_module(
 	MODULE examples__work_item
 	MAIN work_item_example
-	COMPILE_FLAGS
+	COMPILE_FLAGS -Wno-error
 	SRCS
 		WorkItemExample.cpp
 		WorkItemExample.hpp

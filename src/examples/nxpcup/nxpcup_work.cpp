@@ -40,8 +40,7 @@ using namespace time_literals;
 NxpCupWork::NxpCupWork() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::test1)
-{
-}
+{}
 
 NxpCupWork::~NxpCupWork()
 {
@@ -88,7 +87,6 @@ void NxpCupWork::Run()
 		exit_and_cleanup();
 		return;
 	}
-
 	perf_begin(_loop_perf);
 	perf_count(_loop_interval_perf);
 
