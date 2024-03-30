@@ -48,6 +48,8 @@
 #define my ;
 #define heart;
 
+#define THRESHOLD_STRAIGHT 	M_PI_2 / 6.f
+#define THRESHOLD_TURN 		M_PI_4
 
 uint8_t get_num_vectors(Vector *vecs) {
 	uint8_t numVectors = 0;
@@ -98,6 +100,88 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 		vec.m_y1 = pixy.m5_y1;
 	}
 	return vec;
+}
+
+typedef struct pair_ {
+	uint8_t x1;
+	uint8_t x2;
+} pair;
+
+typedef enum {
+	STRAIGHT_LINE,
+	PREPARE_TURN,
+	TURN,
+	RECENTER,
+	CROSSROAD
+} state_e;
+
+typedef enum {
+	LEFT,
+	RIGHT,
+	STRAIGHT
+} direction_e;
+
+int8_t one_vector_offset_from_center(Vector &vec, uint8_t frameWidth) {
+	int16_t window_center = (frameWidth / 2);
+	return vec.m_x0 - window_center;
+}
+
+int8_t get_offset_from_center(Vector &vec1, Vector &vec2, uint8_t frameWidth) {
+	int16_t window_center = (frameWidth / 2);
+	int16_t main_vec = (vec1.m_x0 + vec2.m_x0) / 2;
+	return main_vec - window_center;
+}
+
+int8_t get_offset_from_opposing_vector(Vector &vec1, Vector &vec2, direction_e dir) {
+	// if vec1 is on the right, swap them
+	if(vec1.m_x1 > vec2.m_x1) {
+		Vector temp = vec1;
+		vec1 = vec2;
+		vec2 = temp;
+	}
+	int8_t offset = 0;
+
+	offset = dir == LEFT ? vec1.m_x0 - vec2.m_x0 :
+		dir == RIGHT ? vec2.m_x0 - vec1.m_x0 :
+		vec1.m_x0 - vec2.m_x0;
+	return offset;
+}
+
+direction_e get_direction(Vector vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	if (angle > THRESHOLD_STRAIGHT) {
+		return RIGHT;
+	} else if (angle < -THRESHOLD_STRAIGHT) {
+		return LEFT;
+	} else {
+		return STRAIGHT;
+	}
+}
+
+bool should_turn(Vector vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	return angle > THRESHOLD_TURN || angle < -THRESHOLD_TURN;
+}
+
+Vector resulting_vector(Vector vec1, Vector vec2) {
+	Vector res;
+	uint8_t translation_1x = vec1.m_x0;
+	uint8_t translation_1y = vec1.m_y0;
+	uint8_t translation_2x = vec2.m_x0;
+	uint8_t translation_2y = vec2.m_y0;
+	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
+	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
+	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
+	vec2.m_y0 -= translation_2y; vec2.m_y1 -= translation_2y;
+	res.m_x0 = vec1.m_x0 + vec2.m_x0;
+	res.m_x1 = vec1.m_x1 + vec2.m_x1;
+	res.m_y0 = vec1.m_y0 + vec2.m_y0;
+	res.m_y1 = vec1.m_y1 + vec2.m_y1;
+	res.m_x0 += translation_1x;
+	res.m_x1 += translation_1x;
+	res.m_y0 += translation_1y;
+	res.m_y1 += translation_1y;
+	return res;
 }
 
 roverControl raceTrack(const pixy_vector_s &pixy)
