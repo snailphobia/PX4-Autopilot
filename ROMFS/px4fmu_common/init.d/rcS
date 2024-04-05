@@ -604,7 +604,8 @@ mavlink boot_complete
 
 # Autostart the nxpcup mission
 pixy_uorb start
-# nxpcup_work start
+sleep 2
+nxpcup_work start
 
 # Activate nxpcup_work on ALTCTL mode, othervise stop it
-work_item_example start
+# work_item_example start

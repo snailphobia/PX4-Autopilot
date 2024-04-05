@@ -43,18 +43,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
+#include "blackmagic.h"
 #define ever ;;
 #define my ;
 #define heart;
 
-#define THRESHOLD_STRAIGHT 	M_PI_2 / 6.f
+#define THRESHOLD_STRAIGHT 	M_PI_2 / 5.f
+#define THRESHOLD_STRAIGHT2 	(M_PI_2 / 5.f + M_PI_2)
+
 #define THRESHOLD_TURN 		M_PI_4
 
 uint8_t get_num_vectors(Vector *vecs) {
 	uint8_t numVectors = 0;
 	for (int i = 0; i < 6; i++) {
-		if (vecs[i].m_x0 != 0 && vecs[i].m_x1 != 0 && vecs[i].m_y0 != 0 && vecs[i].m_y1 != 0) {
+		if (vecs[i].m_x0 != 0 || vecs[i].m_x1 != 0 || vecs[i].m_y0 != 0 || vecs[i].m_y1 != 0) {
 			numVectors++;
 		}
 	}
@@ -64,40 +66,40 @@ uint8_t get_num_vectors(Vector *vecs) {
 Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	Vector vec;
 	if(num == 1) {
-		vec.m_x0 = pixy.m0_x0;
-		vec.m_x1 = pixy.m0_x1;
-		vec.m_y0 = pixy.m0_y0;
-		vec.m_y1 = pixy.m0_y1;
+		vec.m_x0 = (int) pixy.m0_x0;
+		vec.m_x1 = (int) pixy.m0_x1;
+		vec.m_y0 = (int) pixy.m0_y0;
+		vec.m_y1 = (int) pixy.m0_y1;
 	}
 	if(num == 2) {
-		vec.m_x0 = pixy.m1_x0;
-		vec.m_x1 = pixy.m1_x1;
-		vec.m_y0 = pixy.m1_y0;
-		vec.m_y1 = pixy.m1_y1;
+		vec.m_x0 = (int) pixy.m1_x0;
+		vec.m_x1 = (int) pixy.m1_x1;
+		vec.m_y0 = (int) pixy.m1_y0;
+		vec.m_y1 = (int) pixy.m1_y1;
 	}
 	if(num == 3) {
-		vec.m_x0 = pixy.m2_x0;
-		vec.m_x1 = pixy.m2_x1;
-		vec.m_y0 = pixy.m2_y0;
-		vec.m_y1 = pixy.m2_y1;
+		vec.m_x0 = (int) pixy.m2_x0;
+		vec.m_x1 = (int) pixy.m2_x1;
+		vec.m_y0 = (int) pixy.m2_y0;
+		vec.m_y1 = (int) pixy.m2_y1;
 	}
 	if(num == 4) {
-		vec.m_x0 = pixy.m3_x0;
-		vec.m_x1 = pixy.m3_x1;
-		vec.m_y0 = pixy.m3_y0;
-		vec.m_y1 = pixy.m3_y1;
+		vec.m_x0 = (int) pixy.m3_x0;
+		vec.m_x1 = (int) pixy.m3_x1;
+		vec.m_y0 = (int) pixy.m3_y0;
+		vec.m_y1 = (int) pixy.m3_y1;
 	}
 	if(num == 5) {
-		vec.m_x0 = pixy.m4_x0;
-		vec.m_x1 = pixy.m4_x1;
-		vec.m_y0 = pixy.m4_y0;
-		vec.m_y1 = pixy.m4_y1;
+		vec.m_x0 = (int) pixy.m4_x0;
+		vec.m_x1 = (int) pixy.m4_x1;
+		vec.m_y0 = (int) pixy.m4_y0;
+		vec.m_y1 = (int) pixy.m4_y1;
 	}
 	if(num == 6) {
-		vec.m_x0 = pixy.m5_x0;
-		vec.m_x1 = pixy.m5_x1;
-		vec.m_y0 = pixy.m5_y0;
-		vec.m_y1 = pixy.m5_y1;
+		vec.m_x0 = (int) pixy.m5_x0;
+		vec.m_x1 = (int) pixy.m5_x1;
+		vec.m_y0 = (int) pixy.m5_y0;
+		vec.m_y1 = (int) pixy.m5_y1;
 	}
 	return vec;
 }
@@ -120,7 +122,7 @@ static state_e last_different_state = NONE;
 static state_e current_state = NONE;
 
 typedef enum {
-	LEFT,
+	LEFT = 0,
 	RIGHT,
 	STRAIGHT
 } direction_e;
@@ -153,13 +155,17 @@ int8_t get_offset_from_opposing_vector(Vector &vec1, Vector &vec2, direction_e d
 
 direction_e get_direction(Vector vec1) {
 	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
-	if (angle > THRESHOLD_STRAIGHT) {
-		return RIGHT;
-	} else if (angle < -THRESHOLD_STRAIGHT) {
-		return LEFT;
+	direction_e dir = STRAIGHT;
+	float th1 = THRESHOLD_STRAIGHT;
+	float th2 = THRESHOLD_STRAIGHT2;
+	if (angle > THRESHOLD_STRAIGHT && angle < THRESHOLD_STRAIGHT2) {
+		dir = RIGHT;
+	} else if (angle < -THRESHOLD_STRAIGHT && angle > -THRESHOLD_STRAIGHT2) {
+		dir = LEFT;
 	} else {
-		return STRAIGHT;
+		dir = STRAIGHT;
 	}
+	return dir;;;;;
 }
 
 bool should_turn(Vector vec1) {
@@ -169,10 +175,12 @@ bool should_turn(Vector vec1) {
 
 Vector resulting_vector(Vector vec1, Vector vec2) {
 	Vector res;
-	uint8_t translation_1x = vec1.m_x0;
-	uint8_t translation_1y = vec1.m_y0;
-	uint8_t translation_2x = vec2.m_x0;
-	uint8_t translation_2y = vec2.m_y0;
+	float x1, y1;
+	projection_to_plane(vec1.m_x0, vec1.m_y0, &x1, &y1);
+	int translation_1x = vec1.m_x0;
+	int translation_1y = vec1.m_y0;
+	int translation_2x = vec2.m_x0;
+	int translation_2y = vec2.m_y0;
 	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
 	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
 	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
@@ -209,8 +217,32 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	// Vector main_vec;
 	Vector vecs[6];
 	for (int i = 0; i < 6; i++) {
-		vecs[i] = copy_vectors(pixy, i);
+		vecs[i] = copy_vectors(pixy, i + 1);
 	}
+	uint8_t numVectors = get_num_vectors(vecs);
+	//keep only the longest 2
+	Vector vecs2[2];
+	float max_norms[2] = {0};
+	for (int i = 0; i < numVectors; i++) {
+		float norm = sqrt((vecs[i].m_x1 - vecs[i].m_x0) * (vecs[i].m_x1 - vecs[i].m_x0) + (vecs[i].m_y1 - vecs[i].m_y0) * (vecs[i].m_y1 - vecs[i].m_y0));
+		if (norm > max_norms[0]) {
+			max_norms[1] = max_norms[0];
+			vecs2[1] = vecs2[0];
+			max_norms[0] = norm;
+			vecs2[0] = vecs[i];
+		} else if (norm > max_norms[1]) {
+			max_norms[1] = norm;
+			vecs2[1] = vecs[i];
+		}
+	}
+	for (int i = 0; i < 6; i++) {
+		vecs[i] = {0, 0, 0, 0};
+	}
+	for (int i = 0; i < 2; i++){
+		vecs[i] = vecs2[i];
+	}
+
+	numVectors = 2;
 
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
@@ -223,7 +255,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
-	uint8_t num_vectors = get_num_vectors(vecs);
+	uint8_t num_vectors = numVectors;
 	collapse_vectors(vecs, num_vectors);
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
@@ -254,6 +286,8 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				for (int i = 1; i < num_vectors; i++) {
 					res = resulting_vector(res, vecs[i]);
 				}
+				float th1 = THRESHOLD_STRAIGHT;
+				float th2 = THRESHOLD_STRAIGHT2;
 				direction_e dir = get_direction(res);
 				auto angle = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
 				if (dir != STRAIGHT) {
@@ -488,6 +522,7 @@ CASE_PREP_TURN_ONE_VECTOR:;
 	roverControl rc;
 	rc.speed = control.speed;
 	rc.steer = control.steer;
-
+	rc.speed = 0.15;
+	rc.steer = 0.0;
 	return rc;
 }

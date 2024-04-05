@@ -87,10 +87,10 @@ struct Vector
 		printf("\n");
 	}
 
-	uint8_t m_x0;
-	uint8_t m_y0;
-	uint8_t m_x1;
-	uint8_t m_y1;
+	int m_x0;
+	int m_y0;
+	int m_x1;
+	int m_y1;
 };
 
 struct VectorF {

@@ -104,7 +104,8 @@ platforms/posix/apps.h
 src/lib/version/build_git_version.h
 src/modules/simulator/simulator_config.h
 src/systemcmds/topic_listener/listener_generated.cpp
-
+src/examples/nxpcup/blackmagic.h
+gdb.txt
 # SITL
 dataman
 eeprom/
