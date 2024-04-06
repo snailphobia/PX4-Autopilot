@@ -307,9 +307,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	roverControl control{};
 	// float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
-	static double steers[STEER_BUFSIZE] = {0};
-	static uint8_t steer_index = 0;
-
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
 	uint8_t num_vectors = numVectors;
@@ -453,8 +450,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			break;
 		}
 	}
-	steer_index = (steer_index + 1) % STEER_BUFSIZE;
-	control.steer = -steers[steer_index];
 	last_steer = control.steer;
 	last_speed = control.speed;
 	roverControl rc;
