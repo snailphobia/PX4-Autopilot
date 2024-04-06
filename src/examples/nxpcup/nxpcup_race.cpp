@@ -170,13 +170,55 @@ direction_e get_direction(Vector vec1) {
 	return dir;
 }
 
+direction_e get_direction(Vector_F vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	direction_e dir = STRAIGHT;
+	if (angle > THRESHOLD_STRAIGHT) {
+		dir = RIGHT;
+	} else if (angle < -THRESHOLD_STRAIGHT) {
+		dir = LEFT;
+	} else {
+		dir = STRAIGHT;
+	}
+	return dir;
+}
+
 bool should_turn_NOW(Vector vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	return angle > THRESHOLD_TURN || angle < -THRESHOLD_TURN;
+}
+
+bool should_turn_NOW(Vector_F vec1) {
 	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
 	return angle > THRESHOLD_TURN || angle < -THRESHOLD_TURN;
 }
 
 Vector resulting_vector(Vector vec1, Vector vec2) {
 	Vector res;
+	float x1, y1;
+	projection_to_plane(vec1.m_x0, vec1.m_y0, &x1, &y1);
+	int translation_1x = vec1.m_x0;
+	int translation_1y = vec1.m_y0;
+	int translation_2x = vec2.m_x0;
+	int translation_2y = vec2.m_y0;
+	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
+	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
+	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
+	vec2.m_y0 -= translation_2y; vec2.m_y1 -= translation_2y;
+	res.m_x0 = vec1.m_x0 + vec2.m_x0;
+	res.m_x1 = vec1.m_x1 + vec2.m_x1;
+	res.m_y0 = vec1.m_y0 + vec2.m_y0;
+	res.m_y1 = vec1.m_y1 + vec2.m_y1;
+	res.m_x0 += translation_1x;
+	res.m_x1 += translation_1x;
+	res.m_y0 += translation_1y;
+	res.m_y1 += translation_1y;
+	return res;
+}
+
+
+Vector_F resulting_vector(Vector_F vec1, Vector_F vec2) {
+	Vector_F res;
 	float x1, y1;
 	projection_to_plane(vec1.m_x0, vec1.m_y0, &x1, &y1);
 	int translation_1x = vec1.m_x0;
@@ -218,18 +260,47 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 {
 	// Vector main_vec;
 	Vector vecs[6];
+	Vector_F vecsF[6];
 	for (int i = 0; i < 6; i++) {
 		vecs[i] = copy_vectors(pixy, i + 1);
 	}
-
 	uint8_t numVectors = get_num_vectors(vecs);
+	float x0,y0,x1,y1;
+	// projection_to_plane(vecs[0].m_x0, vecs[0].m_y0, &x0, &y0);
+	// projection_to_plane(vecs[0].m_x1, vecs[0].m_y1, &x1, &y1);
 	for (int i = 0; i < numVectors; i++) {
-		float x, y;
-		projection_to_plane(vecs[i].m_x0, vecs[i].m_y0, &x, &y);
-		vecs[i].m_x0 = x;
-		vecs[i].m_y0 = y;
+		projection_to_plane(vecs[i].m_x0, vecs[i].m_y0, &x0, &y0);
+		projection_to_plane(vecs[i].m_x1, vecs[i].m_y1, &x1, &y1);
+		vecs[i].m_x0 = x0;
+		vecs[i].m_y0 = y0;
+		vecs[i].m_x1 = x1;
+		vecs[i].m_y1 = y1;
 	}
-	//keep only the longest 2 // pula
+
+	//keep only the longest 2
+	Vector_F vecs2[2];
+	float max_norms[2] = {0};
+	for (int i = 0; i < numVectors; i++) {
+		float norm = sqrt((vecsF[i].m_x1 - vecsF[i].m_x0) * (vecsF[i].m_x1 - vecsF[i].m_x0) + (vecsF[i].m_y1 - vecsF[i].m_y0) * (vecsF[i].m_y1 - vecsF[i].m_y0));
+		if (norm > max_norms[0]) {
+			max_norms[1] = max_norms[0];
+			vecs2[1] = vecs2[0];
+			max_norms[0] = norm;
+			vecs2[0] = vecsF[i];
+		} else if (norm > max_norms[1]) {
+			max_norms[1] = norm;
+			vecs2[1] = vecsF[i];
+		}
+	}
+	// for (int i = 0; i < 6; i++) {
+	// 	vecs[i] = {0, 0, 0, 0};
+	// }
+	// for (int i = 0; i < 2; i++){
+	// 	vecs[i] = vecs2[i];
+	// }
+
+	// numVectors = 2;
+
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
 	// int16_t window_center = (frameWidth / 2);
@@ -247,21 +318,140 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	for(ever) break my heart
 	// PX4_WARN("Pula\n");
 
-	if (num_vectors == 0) {
-		// no line detected
-		control.speed = SPEED_NORMAL;
-		control.steer = last_steer;
-		return control;
-	} else {
-		// add all vectors and compute the angle
-		Vector main_vec = vecs[0];
-		for (int i = 1; i < num_vectors; i++) {
-			main_vec = resulting_vector(main_vec, vecs[i]);
-		}
-		float angle = atan2(main_vec.m_y1 - main_vec.m_y0, main_vec.m_x1 - main_vec.m_x0);
-		control.steer = radian_to_steer(angle);
-		control.speed = SPEED_NORMAL;
+	switch (current_state) {
+		case STRAIGHT_STATE: {
+			if (num_vectors == 0) {
+				control.speed = SPEED_NORMAL;
+				control.steer = 0.0f;
+				break;
+			}
+			if (num_vectors == 1) {
+				// check if vector is on the left or the right of the pov
+				direction_e dir = get_direction(vecsF[0]);
+				int8_t offset = vecs[0].m_x0;
+				// if (offset > 0) {
 
+				// }
+				if (dir == LEFT) {
+					last_different_state = STRAIGHT_STATE;
+					current_state = TURN_L;
+				} else if (dir == RIGHT) {
+					last_different_state = STRAIGHT_STATE;
+					current_state = TURN_R;
+				} else {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
+					control.steer = radian_to_steer(control.steer);
+				}
+			}
+			if (num_vectors >= 2) {
+				auto res = resulting_vector(vecs2[0], vecs2[1]);
+				direction_e dir = get_direction(res);
+				if (dir == LEFT) {
+					last_different_state = STRAIGHT_STATE;
+					current_state = TURN_L;
+				} else if (dir == RIGHT) {
+					last_different_state = STRAIGHT_STATE;
+					current_state = TURN_R;
+				} else {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = radian_to_steer(control.steer);
+				}
+			}
+		}
+		case TURN_L: {
+			if (num_vectors == 0) {
+				control.speed = last_speed;
+				control.steer = last_steer;
+				break;
+			}
+			if (num_vectors == 1) {
+				direction_e dir = get_direction(vecsF[0]);
+				if (dir == LEFT) {
+					if (should_turn_NOW(vecsF[0])) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_LEFT;
+					} else {
+						control.speed = SPEED_NORMAL;
+						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
+						control.steer = radian_to_steer(control.steer);
+					}
+				} else {
+					last_different_state = TURN_L;
+					current_state = STRAIGHT_STATE;
+				}
+			}
+			if (num_vectors >= 2) {
+				Vector_F res = resulting_vector(vecs2[0], vecs2[1]);
+				direction_e dir = get_direction(res);
+				if (dir == LEFT) {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = radian_to_steer(control.steer);
+					if (should_turn_NOW(res)) {
+					control.speed = SPEED_SLOW;
+					control.steer = FULL_LEFT;
+					}
+				} else if (dir == RIGHT) {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = radian_to_steer(control.steer);
+					last_different_state = TURN_L;
+					current_state = TURN_R;
+				} else {
+					last_different_state = TURN_L;
+					current_state = STRAIGHT_STATE;
+				}
+			}
+			break;
+		}
+		case TURN_R: {
+			if (num_vectors == 0) {
+				control.speed = last_speed;
+				control.steer = last_steer;
+				break;
+			}
+			if (num_vectors == 1) {
+				direction_e dir = get_direction(vecsF[0]);
+				if (dir == RIGHT) {
+					if (should_turn_NOW(vecsF[0])) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_RIGHT;
+					} else {
+						control.speed = SPEED_NORMAL;
+						control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
+						control.steer = radian_to_steer(control.steer);
+					}
+				} else {
+					last_different_state = TURN_R;
+					current_state = STRAIGHT_STATE;
+				}
+			}
+			if (num_vectors >= 2) {
+				Vector_F res = resulting_vector(vecs2[0], vecs2[1]);
+				direction_e dir = get_direction(res);
+				if (dir == RIGHT) {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = radian_to_steer(control.steer);
+					if (should_turn_NOW(res)) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_RIGHT;
+					}
+				} else if (dir == LEFT) {
+					control.speed = SPEED_NORMAL;
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = radian_to_steer(control.steer);
+					last_different_state = TURN_R;
+					current_state = TURN_L;
+				} else {
+					last_different_state = TURN_R;
+					current_state = STRAIGHT_STATE;
+				}
+			}
+			break;
+		}
 	}
 	steer_index = (steer_index + 1) % STEER_BUFSIZE;
 	control.steer = -steers[steer_index];
@@ -270,5 +460,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	roverControl rc;
 	rc.speed = control.speed;
 	rc.steer = control.steer;
+	// rc.speed = 0.15;
+	// rc.steer = 0.0;
 	return rc;
 }
