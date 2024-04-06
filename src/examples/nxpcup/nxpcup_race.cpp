@@ -179,10 +179,10 @@ Vector resulting_vector(Vector vec1, Vector vec2) {
 	Vector res;
 	float x1, y1;
 	projection_to_plane(vec1.m_x0, vec1.m_y0, &x1, &y1);
-	int translation_1x = vec1.m_x0;
-	int translation_1y = vec1.m_y0;
-	int translation_2x = vec2.m_x0;
-	int translation_2y = vec2.m_y0;
+	float translation_1x = vec1.m_x0;
+	float translation_1y = vec1.m_y0;
+	float translation_2x = vec2.m_x0;
+	float translation_2y = vec2.m_y0;
 	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
 	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
 	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
