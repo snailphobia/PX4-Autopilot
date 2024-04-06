@@ -270,7 +270,5 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	roverControl rc;
 	rc.speed = control.speed;
 	rc.steer = control.steer;
-	rc.speed = 0.15;
-	rc.steer = 0.0;
 	return rc;
 }
