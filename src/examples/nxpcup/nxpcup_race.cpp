@@ -263,8 +263,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		control.speed = SPEED_NORMAL;
 
 	}
-	steer_index = (steer_index + 1) % STEER_BUFSIZE;
-	control.steer = -steers[steer_index];
 	last_steer = control.steer;
 	last_speed = control.speed;
 	roverControl rc;
