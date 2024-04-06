@@ -432,7 +432,7 @@ CASE_PREP_TURN_ONE_VECTOR:;
 				current_state = NONE;
 			}
 			if (num_vectors == 1) {
-				auto dir = get_direction(vecs[0]);
+				direction_e dir = get_direction(vecs[0]);
 				if (dir == STRAIGHT) {
 					control.speed = SPEED_NORMAL;
 					control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
@@ -443,6 +443,30 @@ CASE_PREP_TURN_ONE_VECTOR:;
 			}
 			if (num_vectors >= 2) {
 				last_different_state = STRAIGHT_LINE;
+				current_state = RECENTER;
+			}
+		}
+		case CROSSROAD: {
+			// slow down, and go straight, until further input
+			// that contradicts this state:
+			// there is at least a vector that is pointing to the left while being on the right side
+			// or the other way around
+			if (num_vectors == 0) {
+				control.speed = SPEED_SLOW;
+				continue;
+			}
+			if (num_vectors == 1) {
+				direction_e dir = get_direction(vecs[0]);
+				if (dir == STRAIGHT) {
+					control.speed = SPEED_SLOW;
+					control.steer = STRAIGHT_;
+				} else {
+					last_different_state = CROSSROAD;
+					current_state = PREPARE_TURN;
+				}
+			}
+			if (num_vectors >= 2) {
+				last_different_state = CROSSROAD;
 				current_state = RECENTER;
 			}
 		}
