@@ -229,7 +229,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		vecs[i].m_x0 = x;
 		vecs[i].m_y0 = y;
 	}
-	//keep only the longest 2
+	//keep only the longest 2 // pula
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
 	// int16_t window_center = (frameWidth / 2);
