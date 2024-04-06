@@ -219,6 +219,10 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	for (int i = 0; i < 6; i++) {
 		vecs[i] = copy_vectors(pixy, i + 1);
 	}
+	float x0,y0,x1,y1;
+	projection_to_plane(vecs[0].m_x0, vecs[0].m_y0, &x0, &y0);
+	projection_to_plane(vecs[0].m_x1, vecs[0].m_y1, &x1, &y1);
+
 	uint8_t numVectors = get_num_vectors(vecs);
 	//keep only the longest 2
 	Vector vecs2[2];
