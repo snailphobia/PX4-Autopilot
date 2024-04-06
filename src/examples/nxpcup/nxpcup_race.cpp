@@ -178,7 +178,6 @@ bool should_turn_NOW(Vector vec1) {
 Vector resulting_vector(Vector vec1, Vector vec2) {
 	Vector res;
 	float x1, y1;
-	projection_to_plane(vec1.m_x0, vec1.m_y0, &x1, &y1);
 	float translation_1x = vec1.m_x0;
 	float translation_1y = vec1.m_y0;
 	float translation_2x = vec2.m_x0;
