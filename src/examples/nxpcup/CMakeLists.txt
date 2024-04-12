@@ -31,6 +31,18 @@
 #
 ############################################################################
 
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/blackmagic.h
+	COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/ortho.py > ${CMAKE_CURRENT_SOURCE_DIR}/blackmagic.h
+	COMMENT "Generating orthogonal LUT"
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ortho.py
+)
+
+add_custom_target(
+	RunOrthogonalProjection ALL
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/blackmagic.h
+)
+
 px4_add_module(
 	MODULE examples__nxpcup
 	MAIN nxpcup_work
@@ -40,6 +52,8 @@ px4_add_module(
 		nxpcup_work.hpp
 		nxpcup_race.cpp
 		nxpcup_race.h
+		blackmagic.h
 	DEPENDS
+		RunOrthogonalProjection
 		px4_work_queue
 	)

@@ -62,8 +62,11 @@
 #define CAR_HALF_WIDTH 	15 	// pixels
 #define SCALING_FACTOR 	20.f	// for the steering angle
 #define TOLERANCE 	4 	// 4 pixels
-#define BOT		30	// pixels
+#define BOT		15	// pixels
 #define STEER_BUFSIZE	3
+
+#define BORDER_X 	12.84f
+#define BORDER_Y	21.45f
 
 struct roverControl {
 	float steer;
@@ -77,6 +80,13 @@ struct _vector {
 	float grad;
 };
 
+struct Vector_F {
+	float m_x0;
+	float m_y0;
+	float m_x1;
+	float m_y1;
+};
+
 struct Vector
 {
 	void print()
@@ -87,10 +97,10 @@ struct Vector
 		printf("\n");
 	}
 
-	uint8_t m_x0;
-	uint8_t m_y0;
-	uint8_t m_x1;
-	uint8_t m_y1;
+	int m_x0;
+	int m_y0;
+	int m_x1;
+	int m_y1;
 };
 
 struct VectorF {
