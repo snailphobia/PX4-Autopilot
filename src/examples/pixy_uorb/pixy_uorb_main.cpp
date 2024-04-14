@@ -67,32 +67,33 @@ int pixy_uorb_thread_main(int argc, char **argv)
 		pixy.getVersion();
 		pixy.version->print();
 		usleep(1000);
-		_pixy_vector.m0_x0 = 0;
-		_pixy_vector.m0_x1 = 0;
-		_pixy_vector.m0_y0 = 0;
-		_pixy_vector.m0_y1 = 0;
-		_pixy_vector.m1_x0 = 0;
-		_pixy_vector.m1_x1 = 0;
-		_pixy_vector.m1_y0 = 0;
-		_pixy_vector.m1_y1 = 0;
-		_pixy_vector.m2_x0 = 0;
-		_pixy_vector.m2_x1 = 0;
-		_pixy_vector.m2_y0 = 0;
-		_pixy_vector.m2_y1 = 0;
-		_pixy_vector.m3_x0 = 0;
-		_pixy_vector.m3_x1 = 0;
-		_pixy_vector.m3_y0 = 0;
-		_pixy_vector.m3_y1 = 0;
-		_pixy_vector.m4_x0 = 0;
-		_pixy_vector.m4_x1 = 0;
-		_pixy_vector.m4_y0 = 0;
-		_pixy_vector.m4_y1 = 0;
-		_pixy_vector.m5_x0 = 0;
-		_pixy_vector.m5_x1 = 0;
-		_pixy_vector.m5_y0 = 0;
-		_pixy_vector.m5_y1 = 0;
+
 		// Loop indefinitely and publish vector data
 		while (1) {
+			_pixy_vector.m0_x0 = 0;
+			_pixy_vector.m0_x1 = 0;
+			_pixy_vector.m0_y0 = 0;
+			_pixy_vector.m0_y1 = 0;
+			_pixy_vector.m1_x0 = 0;
+			_pixy_vector.m1_x1 = 0;
+			_pixy_vector.m1_y0 = 0;
+			_pixy_vector.m1_y1 = 0;
+			_pixy_vector.m2_x0 = 0;
+			_pixy_vector.m2_x1 = 0;
+			_pixy_vector.m2_y0 = 0;
+			_pixy_vector.m2_y1 = 0;
+			_pixy_vector.m3_x0 = 0;
+			_pixy_vector.m3_x1 = 0;
+			_pixy_vector.m3_y0 = 0;
+			_pixy_vector.m3_y1 = 0;
+			_pixy_vector.m4_x0 = 0;
+			_pixy_vector.m4_x1 = 0;
+			_pixy_vector.m4_y0 = 0;
+			_pixy_vector.m4_y1 = 0;
+			_pixy_vector.m5_x0 = 0;
+			_pixy_vector.m5_x1 = 0;
+			_pixy_vector.m5_y0 = 0;
+			_pixy_vector.m5_y1 = 0;
 			pixy.line.getAllFeatures(LINE_VECTOR, wait);		// get line vectors from pixy
             		if(pixy.line.numVectors) {  // Sa moara janina in puscarie efectiv cine a fost retardatu care a
 						    // gandit ca definirea vectorului in un fisier .msg e o idee buna

@@ -196,7 +196,7 @@ else
 	# Start the tone_alarm driver.
 	# Needs to be started after the parameters are loaded (for CBRK_BUZZER).
 	#
-	tone_alarm start
+	# tone_alarm start
 
 	#
 	# Play the startup tune (if not disabled or there is an error)
@@ -604,7 +604,7 @@ mavlink boot_complete
 
 # Autostart the nxpcup mission
 pixy_uorb start
-# nxpcup_work start
+nxpcup_work start
 
 # Activate nxpcup_work on ALTCTL mode, othervise stop it
 work_item_example start

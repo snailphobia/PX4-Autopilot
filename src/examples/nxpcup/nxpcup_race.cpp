@@ -48,7 +48,7 @@
 #define my ;
 #define heart;
 
-#define THRESHOLD_STRAIGHT 	M_PI_2 / 5.f
+#define THRESHOLD_STRAIGHT 	M_PI_2 / 9.f
 #define THRESHOLD_STRAIGHT2 	(M_PI_2 * 2.f / 3.f)
 
 #define THRESHOLD_TURN 		M_PI_4
@@ -221,34 +221,28 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	for (int i = 0; i < 6; i++) {
 		vecs[i] = copy_vectors(pixy, i + 1);
 	}
+
+	for (int i = 0; i < 6; i++) {
+		// flip the vectors if upside down
+		if (vecs[i].m_y0 > vecs[i].m_y1) {
+			int temp = vecs[i].m_y0;
+			vecs[i].m_y0 = vecs[i].m_y1;
+			vecs[i].m_y1 = temp;
+			temp = vecs[i].m_x0;
+			vecs[i].m_x0 = vecs[i].m_x1;
+			vecs[i].m_x1 = temp;
+		}
+	}
 	float x0,y0,x1,y1;
 	projection_to_plane(vecs[0].m_x0, vecs[0].m_y0, &x0, &y0);
 	projection_to_plane(vecs[0].m_x1, vecs[0].m_y1, &x1, &y1);
 
 	uint8_t numVectors = get_num_vectors(vecs);
+	uint8_t num_vectors = numVectors;
+	collapse_vectors(vecs, num_vectors);
 	//keep only the longest 2
 	Vector vecs2[2];
 	float max_norms[2] = {0};
-	for (int i = 0; i < numVectors; i++) {
-		float norm = sqrt((vecs[i].m_x1 - vecs[i].m_x0) * (vecs[i].m_x1 - vecs[i].m_x0) + (vecs[i].m_y1 - vecs[i].m_y0) * (vecs[i].m_y1 - vecs[i].m_y0));
-		if (norm > max_norms[0]) {
-			max_norms[1] = max_norms[0];
-			vecs2[1] = vecs2[0];
-			max_norms[0] = norm;
-			vecs2[0] = vecs[i];
-		} else if (norm > max_norms[1]) {
-			max_norms[1] = norm;
-			vecs2[1] = vecs[i];
-		}
-	}
-	for (int i = 0; i < 6; i++) {
-		vecs[i] = {0, 0, 0, 0};
-	}
-	for (int i = 0; i < 2; i++){
-		vecs[i] = vecs2[i];
-	}
-
-	numVectors = 2;
 
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
@@ -256,13 +250,10 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	roverControl control{};
 	// float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
-	static double steers[STEER_BUFSIZE] = {0};
-	static uint8_t steer_index = 0;
+
 
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
-	uint8_t num_vectors = numVectors;
-	collapse_vectors(vecs, num_vectors);
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
 	static float last_speed = 0.0f;
@@ -274,7 +265,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			if (num_vectors == 0) {
 				control.speed = SPEED_NORMAL;
 				control.steer = 0.0f;
-				break;
 			}
 			if (num_vectors == 1) {
 				// check if vector is on the left or the right of the pov
@@ -285,6 +275,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				// }
 				if (dir == LEFT) {
 					last_different_state = STRAIGHT_STATE;
+
 					current_state = TURN_L;
 				} else if (dir == RIGHT) {
 					last_different_state = STRAIGHT_STATE;
@@ -310,12 +301,12 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					control.steer = radian_to_steer(control.steer);
 				}
 			}
+			break;
 		}
 		case TURN_L: {
 			if (num_vectors == 0) {
-				control.speed = last_speed;
-				control.steer = last_steer;
-				break;
+				last_different_state = TURN_L;
+				current_state = STRAIGHT_STATE;
 			}
 			if (num_vectors == 1) {
 				direction_e dir = get_direction(vecs[0]);
@@ -359,9 +350,8 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		}
 		case TURN_R: {
 			if (num_vectors == 0) {
-				control.speed = last_speed;
-				control.steer = last_steer;
-				break;
+				last_different_state = TURN_R;
+				current_state = STRAIGHT_STATE;
 			}
 			if (num_vectors == 1) {
 				direction_e dir = get_direction(vecs[0]);
@@ -404,8 +394,8 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			break;
 		}
 	}
-	steer_index = (steer_index + 1) % STEER_BUFSIZE;
-	control.steer = -steers[steer_index];
+
+
 	last_steer = control.steer;
 	last_speed = control.speed;
 	roverControl rc;
