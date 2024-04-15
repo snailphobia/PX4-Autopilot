@@ -160,9 +160,9 @@ direction_e get_direction(Vector vec1) {
 	direction_e dir = STRAIGHT;
 	float th1 = THRESHOLD_STRAIGHT;
 	float th2 = THRESHOLD_STRAIGHT2;
-	if (angle > THRESHOLD_STRAIGHT) {
+	if (angle < M_PI_2 - THRESHOLD_STRAIGHT) {
 		dir = RIGHT;
-	} else if (angle < -THRESHOLD_STRAIGHT) {
+	} else if (angle > M_PI_2 + THRESHOLD_STRAIGHT) {
 		dir = LEFT;
 	} else {
 		dir = STRAIGHT;
@@ -170,9 +170,30 @@ direction_e get_direction(Vector vec1) {
 	return dir;
 }
 
+direction_e get_direction(Vector_F vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	direction_e dir = STRAIGHT;
+	float th1 = THRESHOLD_STRAIGHT;
+	float th2 = THRESHOLD_STRAIGHT2;
+	if (angle < M_PI_2 - THRESHOLD_STRAIGHT) {
+ 		dir = RIGHT;
+	} else if (angle > M_PI_2 + THRESHOLD_STRAIGHT) {
+		dir = LEFT;
+	} else {
+		dir = STRAIGHT;
+	}
+	return dir;
+
+}
+
 bool should_turn_NOW(Vector vec1) {
 	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
-	return angle > THRESHOLD_TURN || angle < -THRESHOLD_TURN;
+	return angle > M_PI_2 + THRESHOLD_TURN || angle < M_PI_2 - THRESHOLD_TURN;
+}
+
+bool should_turn_NOW(Vector_F vec1) {
+	auto angle = atan2(vec1.m_y1 - vec1.m_y0, vec1.m_x1 - vec1.m_x0);
+	return angle > M_PI_2 + THRESHOLD_TURN || angle < M_PI_2 - THRESHOLD_TURN;
 }
 
 Vector resulting_vector(Vector vec1, Vector vec2) {
@@ -183,6 +204,28 @@ Vector resulting_vector(Vector vec1, Vector vec2) {
 	int translation_1y = vec1.m_y0;
 	int translation_2x = vec2.m_x0;
 	int translation_2y = vec2.m_y0;
+	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
+	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
+	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
+	vec2.m_y0 -= translation_2y; vec2.m_y1 -= translation_2y;
+	res.m_x0 = vec1.m_x0 + vec2.m_x0;
+	res.m_x1 = vec1.m_x1 + vec2.m_x1;
+	res.m_y0 = vec1.m_y0 + vec2.m_y0;
+	res.m_y1 = vec1.m_y1 + vec2.m_y1;
+	res.m_x0 += translation_1x;
+	res.m_x1 += translation_1x;
+	res.m_y0 += translation_1y;
+	res.m_y1 += translation_1y;
+	return res;
+}
+
+Vector_F resulting_vector(Vector_F vec1, Vector_F vec2) {
+	Vector_F res;
+	float x1, y1;
+	float translation_1x = vec1.m_x0;
+	float translation_1y = vec1.m_y0;
+	float translation_2x = vec2.m_x0;
+	float translation_2y = vec2.m_y0;
 	vec1.m_x0 -= translation_1x; vec1.m_x1 -= translation_1x;
 	vec1.m_y0 -= translation_1y; vec1.m_y1 -= translation_1y;
 	vec2.m_x0 -= translation_2x; vec2.m_x1 -= translation_2x;
@@ -214,35 +257,71 @@ void collapse_vectors(Vector *vecs, uint8_t &num_vectors) {
 	}
 }
 
+Vector_F tribute_to_benjamin_spaghetti(Vector_F vec1, Vector_F vec2) {
+	/* check if the 2 vectors are such that 1.x0 is approximately as much as 2.x1
+	if yes, return the vector starting in 1.(x0, y0) and ending in 2.(x1, y1)
+	else, return a 0 vector */
+	Vector_F res = {};
+	if (abs(vec1.m_x1 - vec2.m_x0) < TOLERANCE_PRJ) {
+		res.m_x0 = vec1.m_x0;
+		res.m_y0 = vec1.m_y0;
+		res.m_x1 = vec2.m_x1;
+		res.m_y1 = vec2.m_y1;
+	}
+
+	return res;
+}
+
+void remodel_vectors_using_BS(Vector_F *vecs, uint8_t &num_vectors) {
+	for (int i = 0; i < num_vectors; i++) {
+		for (int j = i + 1; j < num_vectors; j++) {
+			Vector_F res = tribute_to_benjamin_spaghetti(vecs[i], vecs[j]);
+			if (res.m_x0 != 0 || res.m_x1 != 0 || res.m_y0 != 0 || res.m_y1 != 0) {
+				vecs[i] = res;
+				for (int k = j; k < num_vectors - 1; k++) {
+					vecs[k] = vecs[k + 1];
+				}
+				num_vectors--;
+				j--;
+			}
+		}
+	}
+}
+
+
 roverControl raceTrack(const pixy_vector_s &pixy)
 {
 	// Vector main_vec;
 	Vector vecs[6];
+	Vector_F vecsF[6] = {};
 	for (int i = 0; i < 6; i++) {
 		vecs[i] = copy_vectors(pixy, i + 1);
 	}
 
-	for (int i = 0; i < 6; i++) {
-		// flip the vectors if upside down
-		if (vecs[i].m_y0 > vecs[i].m_y1) {
-			int temp = vecs[i].m_y0;
-			vecs[i].m_y0 = vecs[i].m_y1;
-			vecs[i].m_y1 = temp;
-			temp = vecs[i].m_x0;
-			vecs[i].m_x0 = vecs[i].m_x1;
-			vecs[i].m_x1 = temp;
-		}
-	}
-	float x0,y0,x1,y1;
-	projection_to_plane(vecs[0].m_x0, vecs[0].m_y0, &x0, &y0);
-	projection_to_plane(vecs[0].m_x1, vecs[0].m_y1, &x1, &y1);
-
+	// for (int i = 0; i < 6; i++) {
+	// 	// flip the vectors if upside down
+	// 	if (vecs[i].m_y0 < vecs[i].m_y1) {
+	// 		int temp = vecs[i].m_y0;
+	// 		vecs[i].m_y0 = vecs[i].m_y1;
+	// 		vecs[i].m_y1 = temp;
+	// 		temp = vecs[i].m_x0;
+	// 		vecs[i].m_x0 = vecs[i].m_x1;
+	// 		vecs[i].m_x1 = temp;
+	// 	}
+	// }
 	uint8_t numVectors = get_num_vectors(vecs);
 	uint8_t num_vectors = numVectors;
 	collapse_vectors(vecs, num_vectors);
-	//keep only the longest 2
-	Vector vecs2[2];
-	float max_norms[2] = {0};
+
+	float x0 = 0.f, y0 = 0.f, x1 = 0.f, y1 = 0.f;
+	for (int i = 0; i < 6; i++) {
+		projection_to_plane(vecs[i].m_x0, vecs[i].m_y0, &x0, &y0);
+		projection_to_plane(vecs[i].m_x1, vecs[i].m_y1, &x1, &y1);
+		vecsF[i].m_x0 = x0; vecsF[i].m_y0 = y0;
+		vecsF[i].m_x1 = x1; vecsF[i].m_y1 = y1;
+	}
+
+	remodel_vectors_using_BS(vecsF, num_vectors);
 
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
@@ -257,7 +336,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	time_diff = hrt_elapsed_time_atomic(&no_line_time);
 	static float last_steer = 0.0f;
 	static float last_speed = 0.0f;
-	for(ever) break my heart
 	// PX4_WARN("Pula\n");
 
 	switch (current_state) {
@@ -268,26 +346,39 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			}
 			if (num_vectors == 1) {
 				// check if vector is on the left or the right of the pov
-				direction_e dir = get_direction(vecs[0]);
-				int8_t offset = vecs[0].m_x0;
-				// if (offset > 0) {
+				direction_e dir = get_direction(vecsF[0]);
+				float offset = vecsF[0].m_x0;
 
-				// }
 				if (dir == LEFT) {
-					last_different_state = STRAIGHT_STATE;
-
-					current_state = TURN_L;
+					if (offset > 0) {
+						/* if the vector is on the right side, listen to it*/
+						last_different_state = STRAIGHT_STATE;
+						current_state = TURN_L;
+					} else {
+						/* if the vector is on the left side,
+						try to recenter until there are 2+ vectors */
+						control.speed = SPEED_SLOW;
+						control.steer = RECENTER_RIGHT;
+					}
 				} else if (dir == RIGHT) {
-					last_different_state = STRAIGHT_STATE;
-					current_state = TURN_R;
+					if (offset < 0) {
+						/* if the vector is on the left side, listen to it*/
+						last_different_state = STRAIGHT_STATE;
+						current_state = TURN_R;
+					} else {
+						/* if the vector is on the right side,
+						try to recenter until there are 2+ vectors */
+						control.speed = SPEED_SLOW;
+						control.steer = RECENTER_LEFT;
+					}
 				} else {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
+					control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
 					control.steer = radian_to_steer(control.steer);
 				}
 			}
 			if (num_vectors >= 2) {
-				Vector res = resulting_vector(vecs2[0], vecs2[1]);
+				auto res = resulting_vector(vecsF[0], vecsF[1]);
 				direction_e dir = get_direction(res);
 				if (dir == LEFT) {
 					last_different_state = STRAIGHT_STATE;
@@ -309,14 +400,14 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				current_state = STRAIGHT_STATE;
 			}
 			if (num_vectors == 1) {
-				direction_e dir = get_direction(vecs[0]);
+				direction_e dir = get_direction(vecsF[0]);
 				if (dir == LEFT) {
-					if (should_turn_NOW(vecs[0])) {
+					if (should_turn_NOW(vecsF[0])) {
 						control.speed = SPEED_SLOW;
 						control.steer = FULL_LEFT;
 					} else {
 						control.speed = SPEED_NORMAL;
-						control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
+						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
 						control.steer = radian_to_steer(control.steer);
 					}
 				} else {
@@ -325,7 +416,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				}
 			}
 			if (num_vectors >= 2) {
-				Vector res = resulting_vector(vecs2[0], vecs2[1]);
+				auto res = resulting_vector(vecsF[0], vecsF[1]);
 				direction_e dir = get_direction(res);
 				if (dir == LEFT) {
 					control.speed = SPEED_NORMAL;
@@ -354,14 +445,14 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				current_state = STRAIGHT_STATE;
 			}
 			if (num_vectors == 1) {
-				direction_e dir = get_direction(vecs[0]);
+				direction_e dir = get_direction(vecsF[0]);
 				if (dir == RIGHT) {
-					if (should_turn_NOW(vecs[0])) {
+					if (should_turn_NOW(vecsF[0])) {
 						control.speed = SPEED_SLOW;
 						control.steer = FULL_RIGHT;
 					} else {
 						control.speed = SPEED_NORMAL;
-						control.steer = atan2(vecs[0].m_y1 - vecs[0].m_y0, vecs[0].m_x1 - vecs[0].m_x0);
+						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
 						control.steer = radian_to_steer(control.steer);
 					}
 				} else {
@@ -370,7 +461,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				}
 			}
 			if (num_vectors >= 2) {
-				Vector res = resulting_vector(vecs2[0], vecs2[1]);
+				auto res = resulting_vector(vecsF[0], vecsF[1]);
 				direction_e dir = get_direction(res);
 				if (dir == RIGHT) {
 					control.speed = SPEED_NORMAL;

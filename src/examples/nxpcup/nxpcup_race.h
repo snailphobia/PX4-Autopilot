@@ -58,7 +58,10 @@
 #define STRAIGHT_	0.0f
 #define HALF_LEFT	-0.5f
 #define HALF_RIGHT	0.5f
+#define RECENTER_LEFT	-0.1f
+#define RECENTER_RIGHT	0.1f
 
+#define TOLERANCE_PRJ	1.f
 #define CAR_HALF_WIDTH 	15 	// pixels
 #define SCALING_FACTOR 	20.f	// for the steering angle
 #define TOLERANCE 	4 	// 4 pixels
@@ -93,11 +96,17 @@ struct Vector
 	uint8_t m_y1;
 };
 
-struct VectorF {
-	double m_x0;
-	double m_y0;
-};
+// struct VectorF {
+// 	double m_x0;
+// 	double m_y0;
+// };
 
+typedef struct {
+	float m_x0;
+	float m_y0;
+	float m_x1;
+	float m_y1;
+} Vector_F;
 
 roverControl raceTrack(const pixy_vector_s &pixy);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
