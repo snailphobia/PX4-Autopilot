@@ -48,6 +48,8 @@
 #define my ;
 #define heart;
 
+#define ANGLE_UNIT 		2.f
+
 #define THRESHOLD_STRAIGHT 	M_PI_2 / 9.f
 #define THRESHOLD_STRAIGHT2 	(M_PI_2 * 2.f / 3.f)
 
@@ -257,17 +259,51 @@ void collapse_vectors(Vector *vecs, uint8_t &num_vectors) {
 	}
 }
 
+/**
+ * rotate the vector by a given angle (in degrees)
+*/
+Vector_F rotate_by_value(Vector_F vec, float angle) {
+	Vector_F res;
+	angle = angle / 180.f * M_PI;
+	auto start_point_x = vec.m_x0, start_point_y = vec.m_y0;
+	vec.m_x0 -= start_point_x; vec.m_y0 -= start_point_y;
+	vec.m_x1 -= start_point_x; vec.m_y1 -= start_point_y;
+
+	res.m_x0 = vec.m_x0 * cos(angle) - vec.m_y0 * sin(angle);
+	res.m_y0 = vec.m_x0 * sin(angle) + vec.m_y0 * cos(angle);
+	res.m_x1 = vec.m_x1 * cos(angle) - vec.m_y1 * sin(angle);
+	res.m_y1 = vec.m_x1 * sin(angle) + vec.m_y1 * cos(angle);
+
+	res.m_x0 += start_point_x; res.m_y0 += start_point_y;
+	res.m_x1 += start_point_x; res.m_y1 += start_point_y;
+	return res;
+}
+
 Vector_F tribute_to_benjamin_spaghetti(Vector_F vec1, Vector_F vec2) {
 	/* check if the 2 vectors are such that 1.x0 is approximately as much as 2.x1
 	if yes, return the vector starting in 1.(x0, y0) and ending in 2.(x1, y1)
 	else, return a 0 vector */
 	Vector_F res = {};
-	if (abs(vec1.m_x1 - vec2.m_x0) < TOLERANCE_PRJ) {
-		res.m_x0 = vec1.m_x0;
-		res.m_y0 = vec1.m_y0;
-		res.m_x1 = vec2.m_x1;
-		res.m_y1 = vec2.m_y1;
+	auto original_vec1 = vec1;
+	auto original_vec2 = vec2;
+	for (int i = -7; i < 8; i++) {
+		vec1 = rotate_by_value(original_vec1, ANGLE_UNIT * (float)i);
+		vec2 = rotate_by_value(original_vec2, ANGLE_UNIT * (float)i);
+		if (abs(vec1.m_x0 - vec2.m_x1) < TOLERANCE_PRJ) {
+			res.m_x0 = original_vec1.m_x0;
+			res.m_y0 = original_vec1.m_y0;
+			res.m_x1 = original_vec2.m_x1;
+			res.m_y1 = original_vec2.m_y1;
+			return res;
+		}
 	}
+
+	// if (abs(vec1.m_x1 - vec2.m_x0) < TOLERANCE_PRJ) {
+	// 	res.m_x0 = vec1.m_x0;
+	// 	res.m_y0 = vec1.m_y0;
+	// 	res.m_x1 = vec2.m_x1;
+	// 	res.m_y1 = vec2.m_y1;
+	// }
 
 	return res;
 }
@@ -287,6 +323,8 @@ void remodel_vectors_using_BS(Vector_F *vecs, uint8_t &num_vectors) {
 		}
 	}
 }
+
+
 
 
 roverControl raceTrack(const pixy_vector_s &pixy)
@@ -314,7 +352,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	collapse_vectors(vecs, num_vectors);
 
 	float x0 = 0.f, y0 = 0.f, x1 = 0.f, y1 = 0.f;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < num_vectors; i++) {
 		projection_to_plane(vecs[i].m_x0, vecs[i].m_y0, &x0, &y0);
 		projection_to_plane(vecs[i].m_x1, vecs[i].m_y1, &x1, &y1);
 		vecsF[i].m_x0 = x0; vecsF[i].m_y0 = y0;
@@ -329,7 +367,6 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	roverControl control{};
 	// float x, y;					 // calc gradient and position of main vector
 	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
-
 
 	hrt_abstime time_diff = 0;
 	static bool first_call = true;
@@ -373,7 +410,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					}
 				} else {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
+					control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 				}
 			}
@@ -388,7 +425,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					current_state = TURN_R;
 				} else {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 				}
 			}
@@ -401,14 +438,28 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			}
 			if (num_vectors == 1) {
 				direction_e dir = get_direction(vecsF[0]);
+				auto offset = vecsF[0].m_x0;
 				if (dir == LEFT) {
-					if (should_turn_NOW(vecsF[0])) {
-						control.speed = SPEED_SLOW;
-						control.steer = FULL_LEFT;
-					} else {
+					// if (should_turn_NOW(vecsF[0])) {
+					// 	control.speed = SPEED_SLOW;
+					// 	control.steer = FULL_LEFT;
+					// } else {
+					// 	control.speed = SPEED_NORMAL;
+					// 	control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
+					// 	control.steer = radian_to_steer(control.steer);
+					// }
+					if (offset < 0) {
 						control.speed = SPEED_NORMAL;
-						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
-						control.steer = radian_to_steer(control.steer);
+						control.steer = STRAIGHT_;
+					} else {
+						if (should_turn_NOW(vecsF[0])) {
+							control.speed = SPEED_SLOW;
+							control.steer = FULL_LEFT;
+						} else {
+							control.speed = SPEED_NORMAL;
+							control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
+							control.steer = radian_to_steer(control.steer);
+						}
 					}
 				} else {
 					last_different_state = TURN_L;
@@ -417,10 +468,13 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			}
 			if (num_vectors >= 2) {
 				auto res = resulting_vector(vecsF[0], vecsF[1]);
+				for (int i = 2; i < num_vectors; i++) {
+					res = resulting_vector(res, vecsF[i]);
+				}
 				direction_e dir = get_direction(res);
 				if (dir == LEFT) {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 					if (should_turn_NOW(res)) {
 					control.speed = SPEED_SLOW;
@@ -428,7 +482,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					}
 				} else if (dir == RIGHT) {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 					last_different_state = TURN_L;
 					current_state = TURN_R;
@@ -447,13 +501,19 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			if (num_vectors == 1) {
 				direction_e dir = get_direction(vecsF[0]);
 				if (dir == RIGHT) {
-					if (should_turn_NOW(vecsF[0])) {
-						control.speed = SPEED_SLOW;
-						control.steer = FULL_RIGHT;
-					} else {
+					auto offset = vecsF[0].m_x0;
+					if (offset > 0) {
 						control.speed = SPEED_NORMAL;
-						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0);
-						control.steer = radian_to_steer(control.steer);
+						control.steer = STRAIGHT_;
+					} else {
+						if (should_turn_NOW(vecsF[0])) {
+							control.speed = SPEED_SLOW;
+							control.steer = FULL_RIGHT;
+						} else {
+							control.speed = SPEED_NORMAL;
+							control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
+							control.steer = radian_to_steer(control.steer);
+						}
 					}
 				} else {
 					last_different_state = TURN_R;
@@ -462,10 +522,13 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 			}
 			if (num_vectors >= 2) {
 				auto res = resulting_vector(vecsF[0], vecsF[1]);
+				for (int i = 2; i < num_vectors; i++) {
+					res = resulting_vector(res, vecsF[i]);
+				}
 				direction_e dir = get_direction(res);
 				if (dir == RIGHT) {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 					if (should_turn_NOW(res)) {
 						control.speed = SPEED_SLOW;
@@ -473,7 +536,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					}
 				} else if (dir == LEFT) {
 					control.speed = SPEED_NORMAL;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0);
+					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					control.steer = radian_to_steer(control.steer);
 					last_different_state = TURN_R;
 					current_state = TURN_L;
