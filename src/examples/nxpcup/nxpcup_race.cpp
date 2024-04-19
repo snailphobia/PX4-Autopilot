@@ -441,7 +441,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 					control.speed = SPEED_NORMAL;
 					// control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
 					// control.steer = radian_to_steer(control.steer);
-					if (vecsF[0].m_x0 > 0) {
+					if (last_different_state == TURN_L) {
 						control.speed = SPEED_SLOW;
 						control.steer = RECENTER_LEFT;
 					} else {
@@ -481,28 +481,28 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				direction_e dir = get_direction(vecsF[0]);
 				auto offset = vecsF[0].m_x0;
 				if (dir == LEFT) {
-					// if (should_turn_NOW(vecsF[0])) {
-					// 	control.speed = SPEED_SLOW;
-					// 	control.steer = FULL_LEFT;
-					// } else {
+					if (should_turn_NOW(vecsF[0])) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_LEFT;
+					} else {
 						control.speed = SPEED_NORMAL;
 						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
 						// control.steer = radian_to_steer(control.steer);
-					// }
+					}
 					if (offset < 0) {
 						control.speed = SPEED_SLOW;
 						control.steer = HALF_LEFT;
 					} else {
-						// if (should_turn_NOW(vecsF[0])) {
-						// 	control.speed = SPEED_SLOW;
-						// 	control.steer = FULL_LEFT;
-						// } else {
-						control.speed = SPEED_SLOW;
-						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
+						if (should_turn_NOW(vecsF[0])) {
+							control.speed = SPEED_SLOW;
+							control.steer = FULL_LEFT;
+						} else {
+							control.speed = SPEED_SLOW;
+							control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
 						// if (!should_turn_NOW(vecsF[0]))
 						// 	control.steer /= 1.25f;
 							// control.steer = radian_to_steer(control.steer);
-						// }
+						}
 					}
 				} else {
 					last_different_state = TURN_L;
@@ -516,15 +516,16 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				}
 				direction_e dir = get_direction(res);
 				if (dir == LEFT) {
-					control.speed = SPEED_SLOW;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
 					// control.steer = radian_to_steer(control.steer);
-					// if (should_turn_NOW(res)) {
-					// control.speed = SPEED_SLOW;
-					// control.steer = FULL_LEFT;
-					// }
-					if (!should_turn_NOW(res))
-						control.steer /= 1.25f;
+					if (should_turn_NOW(res)) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_LEFT;
+					} else {
+						control.speed = SPEED_SLOW;
+						control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
+					}
+					// if (!should_turn_NOW(res))
+					// 	control.steer /= 1.25f;
 				} else if (dir == RIGHT) {
 					control.speed = SPEED_SLOW;
 					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
@@ -551,16 +552,16 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 						control.speed = SPEED_SLOW;
 						control.steer = STRAIGHT_;
 					} else {
-						// if (should_turn_NOW(vecsF[0])) {
-						// 	control.speed = SPEED_SLOW;
-						// 	control.steer = FULL_RIGHT;
-						// } else {
-						control.speed = SPEED_SLOW;
-						control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
+						if (should_turn_NOW(vecsF[0])) {
+							control.speed = SPEED_SLOW;
+							control.steer = FULL_RIGHT;
+						} else {
+							control.speed = SPEED_SLOW;
+							control.steer = atan2(vecsF[0].m_y1 - vecsF[0].m_y0, vecsF[0].m_x1 - vecsF[0].m_x0) - M_PI_2;
 						// if (!should_turn_NOW(vecsF[0]))
 						// 	control.steer /= 1.25f;
 							// control.steer = radian_to_steer(control.steer);
-						// }
+						}
 					}
 				} else {
 					last_different_state = TURN_R;
@@ -574,13 +575,14 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 				}
 				direction_e dir = get_direction(res);
 				if (dir == RIGHT) {
-					control.speed = SPEED_SLOW;
-					control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
+					if (should_turn_NOW(res)) {
+						control.speed = SPEED_SLOW;
+						control.steer = FULL_RIGHT;
+					} else {
+						control.speed = SPEED_SLOW;
+						control.steer = atan2(res.m_y1 - res.m_y0, res.m_x1 - res.m_x0) - M_PI_2;
+					}
 					// control.steer = radian_to_steer(control.steer);
-					// if (should_turn_NOW(res)) {
-					// 	control.speed = SPEED_SLOW;
-					// 	control.steer = FULL_RIGHT;
-					// }
 					// if (!should_turn_NOW(res))
 					// 	control.steer /= 1.25f;
 				} else if (dir == LEFT) {
