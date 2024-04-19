@@ -53,15 +53,16 @@
 #define SPEED_SLOW	0.15f
 #define SPEED_STOP	0.0f
 
-#define FULL_LEFT 	-1.0f
-#define FULL_RIGHT 	1.0f
+#define FULL_LEFT 	1.0f
+#define FULL_RIGHT 	-1.0f
 #define STRAIGHT_	0.0f
-#define HALF_LEFT	-0.5f
-#define HALF_RIGHT	0.5f
-#define RECENTER_LEFT	-0.1f
-#define RECENTER_RIGHT	0.1f
+#define HALF_LEFT	0.5f
+#define HALF_RIGHT	-0.5f
+#define RECENTER_LEFT	0.2f
+#define RECENTER_RIGHT	-0.2f
 
 #define TOLERANCE_PRJ	1.f
+#define TOLERANCE_CLPS	0.5f
 #define CAR_HALF_WIDTH 	15 	// pixels
 #define SCALING_FACTOR 	20.f	// for the steering angle
 #define TOLERANCE 	4 	// 4 pixels
