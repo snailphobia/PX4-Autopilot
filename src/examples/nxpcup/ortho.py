@@ -9,7 +9,7 @@ width = 79
 height = 52
 fovx = 60
 fovy = 40
-angle_of_view = 45  # degrees
+angle_of_view = 20  # degrees
 position = np.array([0, 0, 10]).reshape(3, 1)
 
 ############################ ORTHOGONAL CALCULATION ############################

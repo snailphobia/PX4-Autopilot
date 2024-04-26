@@ -56,10 +56,10 @@
 #define FULL_LEFT 	1.0f
 #define FULL_RIGHT 	-1.0f
 #define STRAIGHT_	0.0f
-#define HALF_LEFT	0.5f
-#define HALF_RIGHT	-0.5f
-#define RECENTER_LEFT	0.2f
-#define RECENTER_RIGHT	-0.2f
+#define HALF_LEFT	0.3f
+#define HALF_RIGHT	-0.3f
+#define RECENTER_LEFT	0.4f
+#define RECENTER_RIGHT	-0.4f
 
 #define TOLERANCE_PRJ	1.f
 #define TOLERANCE_CLPS	0.5f
